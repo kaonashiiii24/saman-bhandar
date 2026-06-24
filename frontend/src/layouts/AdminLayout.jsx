@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Outlet, useLocation, Link } from 'react-router-dom'
-import { LayoutDashboard, Users, Building2, BarChart3, LogOut, ShieldCheck, ChevronLeft, ChevronRight, Home } from 'lucide-react'
+import { LayoutDashboard, Users, Building2, BarChart3,BookOpen, LogOut, ShieldCheck, ChevronLeft, ChevronRight, Home } from 'lucide-react'
 import SidebarLink from '../components/common/SidebarLink'
 import DashboardTopbar from '../components/common/DashboardTopbar'
 import { useAuth } from '../hooks/useAuth'
@@ -10,6 +10,7 @@ const NAV = [
   { to: '/admin/users', icon: Users, label: 'Users' },
   { to: '/admin/listings', icon: Building2, label: 'Listings' },
   { to: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
+  { to: '/admin/docs', icon: BookOpen, label: 'Documentation' }
 ]
 
 const PAGE_TITLES = {
@@ -17,6 +18,7 @@ const PAGE_TITLES = {
   '/admin/users': 'Manage Users',
   '/admin/listings': 'Manage Listings',
   '/admin/analytics': 'Analytics',
+  
 }
 
 export default function AdminLayout() {
@@ -35,33 +37,33 @@ export default function AdminLayout() {
 
   return (
     <div className="flex h-screen bg-chalk overflow-hidden">
-      {mobileOpen && <div className="fixed inset-0 bg-[#1c1917]/60 backdrop-blur-sm z-40 lg:hidden" onClick={() => setMobileOpen(false)} />}
-      <aside className={`fixed lg:relative z-50 lg:z-auto h-full flex flex-col bg-[#1c1917] transition-all duration-300 ease-in-out shrink-0
+      {mobileOpen && <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 lg:hidden" onClick={() => setMobileOpen(false)} />}
+      <aside className={`fixed lg:relative z-50 lg:z-auto h-full flex flex-col bg-white border-r border-border transition-all duration-300 ease-in-out shrink-0
         ${collapsed ? 'w-[64px]' : 'w-60'} ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-        <Link to="/" className={`flex items-center gap-3 px-4 py-4 border-b border-white/8 hover:bg-white/5 transition-colors ${collapsed ? 'justify-center' : ''}`}>
+        <Link to="/" className={`flex items-center gap-3 px-4 h-14 border-b border-border hover:bg-chalk transition-colors shrink-0 ${collapsed ? 'justify-center' : ''}`}>
           <div className="w-8 h-8 bg-brick rounded-lg flex items-center justify-center shrink-0">
             <ShieldCheck size={16} className="text-white" />
           </div>
           {!collapsed && (
             <div>
-              <p className="text-white font-display font-black text-sm leading-none">SamanBhandar</p>
-              <p className="text-white/40 text-[10px] mt-0.5">Admin Portal</p>
+              <p className="text-[#1c1917] font-display font-black text-sm leading-none">SamanBhandar</p>
+              <p className="text-[#71717a] text-[10px] mt-0.5">Admin Portal</p>
             </div>
           )}
         </Link>
         <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-0.5">
           {NAV.map(item => <SidebarLink key={item.to} {...item} collapsed={collapsed} />)}
         </nav>
-        <div className="border-t border-white/8 px-2 py-3 space-y-0.5">
-          <Link to="/" className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/40 hover:text-white hover:bg-white/8 transition-all">
+        <div className="border-t border-border px-2 py-3 space-y-0.5 shrink-0">
+          <Link to="/" className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[#71717a] hover:text-[#1c1917] hover:bg-chalk transition-all">
             <Home size={17} className="shrink-0" />
             {!collapsed && <span>Back to Home</span>}
           </Link>
-          <button onClick={logout} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-all">
+          <button onClick={logout} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[#71717a] hover:text-red-500 hover:bg-red-50 transition-all">
             <LogOut size={17} className="shrink-0" />
             {!collapsed && <span>Sign out</span>}
           </button>
-          <button onClick={() => setCollapsed(!collapsed)} className="hidden lg:flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/30 hover:text-white hover:bg-white/8 transition-all">
+          <button onClick={() => setCollapsed(!collapsed)} className="hidden lg:flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[#71717a] hover:text-[#1c1917] hover:bg-chalk transition-all">
             {collapsed ? <ChevronRight size={17} /> : <ChevronLeft size={17} />}
             {!collapsed && <span>Collapse</span>}
           </button>
@@ -70,7 +72,7 @@ export default function AdminLayout() {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <DashboardTopbar onMenuToggle={() => setMobileOpen(!mobileOpen)} mobileOpen={mobileOpen} title={title} />
         <main className="flex-1 overflow-y-auto bg-chalk">
-          <div className="p-3 sm:p-4 lg:p-6 max-w-7xl mx-auto animate-fade-in">
+          <div className="p-4 sm:p-5 lg:p-6 max-w-7xl mx-auto animate-fade-in">
             <Outlet />
           </div>
         </main>

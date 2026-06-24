@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
-import { CalendarCheck, Search, Clock, CheckCircle2, AlertCircle, MapPin, X, Star, Package, ArrowRight } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { CalendarCheck, Search, Clock, CheckCircle2, AlertCircle, MapPin, X, Star, Package, ArrowRight, Plus } from 'lucide-react'
 import { getMyBookings, cancelBooking } from '../../services/bookingService'
-import { initiatePayment } from '../../services/paymentService'
 import { checkCanReview, submitReview } from '../../services/reviewService'
 import Loader from '../../components/common/Loader'
 import AlertMessage from '../../components/common/AlertMessage'
@@ -103,19 +103,11 @@ function ReviewModal({ booking, onSuccess, onClose }) {
 
 function PaymentModal({ booking, onSuccess, onClose }) {
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
 
-  const handlePayment = async (method) => {
+  const handlePayment = (method) => {
     setLoading(true)
-    setError('')
-    try {
-      await initiatePayment({ booking_id: booking.id, method })
-      onSuccess()
-    } catch (err) {
-      setError(err.response?.data?.message || 'Payment failed')
-    } finally {
-      setLoading(false)
-    }
+    const transactionUuid = `TXN-${Date.now()}-${booking.id}`
+    window.location.href = `/payment/simulate?booking=${booking.id}&txn=${transactionUuid}&method=${method}&amount=${booking.total_amount}`
   }
 
   return (
@@ -147,16 +139,24 @@ function PaymentModal({ booking, onSuccess, onClose }) {
           </div>
         </div>
         <div className="p-5 space-y-3">
-          {error && <AlertMessage type="error" message={error} />}
           <p className="text-xs font-semibold text-[#1c1917]">Select payment method</p>
+          
           <button
             onClick={() => handlePayment('esewa')}
             disabled={loading}
             className="w-full flex items-center justify-between p-4 border-2 border-border rounded-xl hover:border-emerald-500 hover:bg-emerald-50/30 transition-all group"
           >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
-                <span className="text-emerald-700 font-black text-sm">e₹</span>
+              <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center shadow-sm">
+                <img 
+                  src="https://esewa.com.np/images/esewa-icon.png" 
+                  alt="eSewa" 
+                  className="w-8 h-8 object-contain"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.parentElement.innerHTML = '<span class="text-emerald-600 font-black text-lg">e₹</span>';
+                  }}
+                />
               </div>
               <div className="text-left">
                 <p className="text-sm font-bold text-[#1c1917]">eSewa</p>
@@ -165,14 +165,23 @@ function PaymentModal({ booking, onSuccess, onClose }) {
             </div>
             <ArrowRight size={16} className="text-[#71717a] group-hover:text-emerald-600 group-hover:translate-x-0.5 transition-all" />
           </button>
+
           <button
             onClick={() => handlePayment('khalti')}
             disabled={loading}
             className="w-full flex items-center justify-between p-4 border-2 border-border rounded-xl hover:border-purple-500 hover:bg-purple-50/30 transition-all group"
           >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-                <span className="text-purple-700 font-black text-sm">K</span>
+              <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center shadow-sm">
+                <img 
+                  src="https://khalti.com/static/khalti-logo.svg" 
+                  alt="Khalti" 
+                  className="w-8 h-8 object-contain"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.parentElement.innerHTML = '<span class="text-purple-600 font-black text-lg">K</span>';
+                  }}
+                />
               </div>
               <div className="text-left">
                 <p className="text-sm font-bold text-[#1c1917]">Khalti</p>
@@ -181,12 +190,6 @@ function PaymentModal({ booking, onSuccess, onClose }) {
             </div>
             <ArrowRight size={16} className="text-[#71717a] group-hover:text-purple-600 group-hover:translate-x-0.5 transition-all" />
           </button>
-          {loading && (
-            <div className="flex items-center justify-center gap-2 py-2">
-              <span className="w-4 h-4 border-2 border-[#1c1917] border-t-transparent rounded-full animate-spin" />
-              <span className="text-xs text-[#71717a]">Processing payment...</span>
-            </div>
-          )}
         </div>
       </div>
     </div>
@@ -303,77 +306,87 @@ export default function MyBookings() {
       </div>
 
       <div className="space-y-3">
-        {filtered.length === 0 && (
+        {filtered.length === 0 ? (
           <div className="bg-white border border-border rounded-xl p-10 sm:p-14 text-center animate-fade-in">
             <CalendarCheck size={36} className="text-border mx-auto mb-3" />
-            <p className="font-display font-bold text-[#1c1917] text-sm mb-1">No bookings found</p>
-            <p className="text-[#71717a] text-xs">Try adjusting your search or filter</p>
+            <p className="font-display font-bold text-[#1c1917] text-sm mb-1">
+              {bookings.length === 0 ? 'No bookings yet' : 'No bookings found'}
+            </p>
+            <p className="text-[#71717a] text-xs mb-4">
+              {bookings.length === 0 ? 'Find a storage space and book it to get started.' : 'Try adjusting your search or filter'}
+            </p>
+            {bookings.length === 0 && (
+              <Link to="/listings" className="inline-flex items-center gap-2 bg-[#1c1917] hover:bg-brick text-white font-display font-bold px-5 py-2.5 rounded-lg transition-colors text-sm">
+                <Plus size={15} /> Book a Space Now
+              </Link>
+            )}
           </div>
-        )}
-        {paged.map((b, i) => {
-          const s = STATUS_MAP[b.status] || STATUS_MAP.pending
-          const Icon = s.icon
-          const canReview = reviewableIds.has(b.id)
-          return (
-            <div 
-              key={b.id} 
-              className="bg-white border border-border rounded-xl p-4 sm:p-5 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 animate-fade-in-up"
-              style={{ animationDelay: `${i * 50}ms`, animationFillMode: 'both' }}
-            >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-                <div className="flex items-start gap-3 sm:gap-4">
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-chalk to-chalk-dark flex items-center justify-center shrink-0">
-                    <Package size={15} className="text-[#1c1917]" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                      <p className="font-display font-bold text-[#1c1917] text-sm truncate max-w-[200px] sm:max-w-none">{b.listing_title}</p>
-                      <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${s.color}`}>
-                        <Icon size={9} /> {s.label}
-                      </span>
+        ) : (
+          paged.map((b, i) => {
+            const s = STATUS_MAP[b.status] || STATUS_MAP.pending
+            const Icon = s.icon
+            const canReview = reviewableIds.has(b.id)
+            return (
+              <div 
+                key={b.id} 
+                className="bg-white border border-border rounded-xl p-4 sm:p-5 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 animate-fade-in-up"
+                style={{ animationDelay: `${i * 50}ms`, animationFillMode: 'both' }}
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+                  <div className="flex items-start gap-3 sm:gap-4">
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-chalk to-chalk-dark flex items-center justify-center shrink-0">
+                      <Package size={15} className="text-[#1c1917]" />
                     </div>
-                    <div className="flex items-center gap-1 text-xs text-[#71717a]">
-                      <MapPin size={10} /> {b.location || b.listing_location}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                        <p className="font-display font-bold text-[#1c1917] text-sm truncate max-w-[200px] sm:max-w-none">{b.listing_title}</p>
+                        <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${s.color}`}>
+                          <Icon size={9} /> {s.label}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1 text-xs text-[#71717a]">
+                        <MapPin size={10} /> {b.location || b.listing_location}
+                      </div>
+                      <p className="text-xs text-[#71717a] mt-0.5">{b.start_date} → {b.end_date}</p>
+                      {b.host_name && (
+                        <p className="text-xs text-[#71717a] mt-0.5">Host: {b.host_name}</p>
+                      )}
                     </div>
-                    <p className="text-xs text-[#71717a] mt-0.5">{b.start_date} → {b.end_date}</p>
-                    {b.host_name && (
-                      <p className="text-xs text-[#71717a] mt-0.5">Host: {b.host_name}</p>
-                    )}
                   </div>
-                </div>
-                <div className="flex items-center justify-between sm:flex-col sm:items-end gap-2 shrink-0 pl-12 sm:pl-0">
-                  <p className="font-display font-black text-[#1c1917]">Rs {Number(b.total_amount).toLocaleString()}</p>
-                  <div className="flex items-center gap-2">
-                    {b.status === 'approved' && (
-                      <button 
-                        onClick={() => setPaymentBooking(b)}
-                        className="inline-flex items-center gap-1 text-xs text-emerald-600 hover:underline font-semibold"
-                      >
-                        <CheckCircle2 size={11} /> Pay Now
-                      </button>
-                    )}
-                    {b.status === 'active' && (
-                      <button 
-                        onClick={() => handleCancel(b.id)}
-                        className="inline-flex items-center gap-1 text-xs text-brick hover:underline font-semibold transition-all hover:text-red-700"
-                      >
-                        <X size={11} /> Cancel
-                      </button>
-                    )}
-                    {canReview && (
-                      <button 
-                        onClick={() => setReviewBooking(b)}
-                        className="inline-flex items-center gap-1 text-xs text-amber-600 hover:underline font-semibold transition-all hover:text-amber-700"
-                      >
-                        <Star size={11} /> Review
-                      </button>
-                    )}
+                  <div className="flex items-center justify-between sm:flex-col sm:items-end gap-2 shrink-0 pl-12 sm:pl-0">
+                    <p className="font-display font-black text-[#1c1917]">Rs {Number(b.total_amount).toLocaleString()}</p>
+                    <div className="flex items-center gap-2">
+                      {b.status === 'approved' && (
+                        <button 
+                          onClick={() => setPaymentBooking(b)}
+                          className="inline-flex items-center gap-1 text-xs text-emerald-600 hover:underline font-semibold"
+                        >
+                          <CheckCircle2 size={11} /> Pay Now
+                        </button>
+                      )}
+                      {b.status === 'active' && (
+                        <button 
+                          onClick={() => handleCancel(b.id)}
+                          className="inline-flex items-center gap-1 text-xs text-brick hover:underline font-semibold transition-all hover:text-red-700"
+                        >
+                          <X size={11} /> Cancel
+                        </button>
+                      )}
+                      {canReview && (
+                        <button 
+                          onClick={() => setReviewBooking(b)}
+                          className="inline-flex items-center gap-1 text-xs text-amber-600 hover:underline font-semibold transition-all hover:text-amber-700"
+                        >
+                          <Star size={11} /> Review
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          )
-        })}
+            )
+          })
+        )}
       </div>
 
       {totalPages > 1 && (

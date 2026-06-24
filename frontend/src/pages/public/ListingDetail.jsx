@@ -7,7 +7,6 @@ import { getListingReviews } from '../../services/reviewService'
 import { useAuth } from '../../hooks/useAuth'
 import Loader from '../../components/common/Loader'
 import AlertMessage from '../../components/common/AlertMessage'
-import ReviewList from '../../components/common/ReviewList'
 
 export default function ListingDetail() {
   const { id } = useParams()
@@ -157,7 +156,23 @@ export default function ListingDetail() {
                     </div>
                   )}
                 </div>
-                <ReviewList reviews={reviews} />
+                {reviews.map((review, i) => (
+                  <div key={i} className="border-b border-border pb-4 last:border-0 last:pb-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="w-7 h-7 rounded-full bg-[#1c1917] flex items-center justify-center text-white text-xs font-bold">
+                        {review.reviewer_name?.charAt(0) || 'U'}
+                      </div>
+                      <p className="text-sm font-semibold text-[#1c1917]">{review.reviewer_name}</p>
+                      <div className="flex gap-0.5 ml-auto">
+                        {[1,2,3,4,5].map(s => (
+                          <Star key={s} size={11} className={s <= review.rating ? 'fill-mustard text-mustard' : 'text-border'} />
+                        ))}
+                      </div>
+                    </div>
+                    {review.comment && <p className="text-sm text-[#71717a]">{review.comment}</p>}
+                    <p className="text-[10px] text-[#71717a] mt-1">{new Date(review.created_at).toLocaleDateString()}</p>
+                  </div>
+                ))}
               </div>
             )}
           </div>

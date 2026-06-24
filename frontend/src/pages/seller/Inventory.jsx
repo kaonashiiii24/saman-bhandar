@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Package, Plus, Search, Trash2, AlertTriangle, X, Truck } from 'lucide-react'
+import { Package, Plus, Search, Trash2, AlertTriangle, X, Truck, ArrowDown, ArrowUp } from 'lucide-react'
 import { getInventory, createItem, deleteItem, createDeliveryRequest } from '../../services/inventoryService'
 import { getMyBookings } from '../../services/bookingService'
 import Loader from '../../components/common/Loader'
@@ -14,12 +14,14 @@ export default function Inventory() {
   const [search, setSearch] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [showDeliveryForm, setShowDeliveryForm] = useState(false)
+  const [deliveryType, setDeliveryType] = useState('pickup')
   const [form, setForm] = useState({ name: '', category: '', quantity: '', booking_id: '' })
   const [deliveryForm, setDeliveryForm] = useState({
     booking_id: '',
     pickup_location: '',
     delivery_location: '',
     instructions: '',
+    delivery_fee: '',
     selectedItems: []
   })
   const [submitting, setSubmitting] = useState(false)
@@ -30,7 +32,7 @@ export default function Inventory() {
     try {
       const [invRes, bookRes] = await Promise.all([getInventory(), getMyBookings()])
       setItems(invRes.data.data.items || [])
-      setBookings((bookRes.data.data.bookings || []).filter(b => b.status === 'active' || b.status === 'approved'))
+      setBookings(bookRes.data.data.bookings || [])
     } catch { setError('Failed to load data') }
     finally { setLoading(false) }
   }
@@ -72,15 +74,24 @@ export default function Inventory() {
     
     setSubmitting(true)
     try {
+      const itemsPayload = deliveryForm.selectedItems.map(i => ({
+        id: i.id,
+        name: i.name,
+        category: i.category || '',
+        quantity: i.quantity
+      }))
+
       await createDeliveryRequest({
         booking_id: deliveryForm.booking_id,
         pickup_location: deliveryForm.pickup_location,
         delivery_location: deliveryForm.delivery_location,
-        items: deliveryForm.selectedItems,
-        instructions: deliveryForm.instructions
+        items: itemsPayload,
+        instructions: deliveryForm.instructions,
+        type: deliveryType,
+        delivery_fee: deliveryForm.delivery_fee || 0
       })
-      setSuccess('Delivery request created! Couriers can now accept it.')
-      setDeliveryForm({ booking_id: '', pickup_location: '', delivery_location: '', instructions: '', selectedItems: [] })
+      setSuccess(`Delivery request created! Couriers can now accept it.`)
+      setDeliveryForm({ booking_id: '', pickup_location: '', delivery_location: '', instructions: '', delivery_fee: '', selectedItems: [] })
       setShowDeliveryForm(false)
       setTimeout(() => setSuccess(''), 3000)
     } catch (err) {
@@ -100,7 +111,7 @@ export default function Inventory() {
     } else {
       setDeliveryForm(prev => ({
         ...prev,
-        selectedItems: [...prev.selectedItems, { id: item.id, name: item.name, quantity: 1 }]
+        selectedItems: [...prev.selectedItems, { id: item.id, name: item.name, category: item.category || '', quantity: 1 }]
       }))
     }
   }
@@ -140,11 +151,11 @@ export default function Inventory() {
             className="w-full pl-9 pr-4 py-2.5 text-sm border border-border rounded-lg bg-white text-[#1c1917] placeholder-[#71717a] outline-none focus:border-[#1c1917] focus:ring-2 focus:ring-[#1c1917]/6 transition-all" />
         </div>
         <div className="flex gap-2">
-          <button onClick={() => setShowDeliveryForm(!showDeliveryForm)}
+          <button onClick={() => { setShowDeliveryForm(!showDeliveryForm); setShowForm(false) }}
             className="inline-flex items-center justify-center gap-2 bg-brick hover:bg-brick-dark text-white font-display font-bold px-4 py-2.5 rounded-lg transition-colors text-sm shrink-0">
             {showDeliveryForm ? <><X size={15} /> Cancel</> : <><Truck size={15} /> Request Delivery</>}
           </button>
-          <button onClick={() => setShowForm(!showForm)}
+          <button onClick={() => { setShowForm(!showForm); setShowDeliveryForm(false) }}
             className="inline-flex items-center justify-center gap-2 bg-[#1c1917] hover:bg-brick text-white font-display font-bold px-4 py-2.5 rounded-lg transition-colors text-sm shrink-0">
             {showForm ? <><X size={15} /> Cancel</> : <><Plus size={15} /> Add Item</>}
           </button>
@@ -154,28 +165,60 @@ export default function Inventory() {
       {showDeliveryForm && (
         <div className="bg-white border border-border rounded-xl p-4 sm:p-5 animate-fade-in-up">
           <h3 className="font-display font-bold text-[#1c1917] mb-4 text-sm">New Delivery Request</h3>
+
+          <div className="flex gap-2 mb-4">
+            <button type="button" onClick={() => { setDeliveryType('pickup'); setDeliveryForm({ ...deliveryForm, selectedItems: [] }) }}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                deliveryType === 'pickup' ? 'bg-[#1c1917] text-white shadow-md' : 'bg-chalk border border-border text-[#71717a] hover:border-[#1c1917]'
+              }`}>
+              <ArrowUp size={15} /> Pickup from Storage
+            </button>
+            <button type="button" onClick={() => { setDeliveryType('dropoff'); setDeliveryForm({ ...deliveryForm, selectedItems: [] }) }}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                deliveryType === 'dropoff' ? 'bg-[#1c1917] text-white shadow-md' : 'bg-chalk border border-border text-[#71717a] hover:border-[#1c1917]'
+              }`}>
+              <ArrowDown size={15} /> Dropoff to Storage
+            </button>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
             <div className="sm:col-span-2">
               <label className="block text-xs font-bold text-[#1c1917] mb-1.5">Storage Space</label>
               <select value={deliveryForm.booking_id} onChange={e => setDeliveryForm({ ...deliveryForm, booking_id: e.target.value, selectedItems: [] })}
                 className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-chalk text-[#1c1917] outline-none focus:border-[#1c1917] focus:bg-white transition-all">
                 <option value="">Select a space</option>
-                {bookings.map(b => (
+                {bookings.filter(b => b.status === 'active' || b.status === 'approved').map(b => (
                   <option key={b.id} value={b.id}>{b.listing_title} — {b.listing_location}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold text-[#1c1917] mb-1.5">Pickup Location</label>
-              <input type="text" placeholder="e.g. Lakeside, Pokhara" value={deliveryForm.pickup_location}
+              <label className="block text-xs font-bold text-[#1c1917] mb-1.5">
+                {deliveryType === 'pickup' ? 'Pickup Location' : 'Supplier/Your Address'}
+              </label>
+              <input type="text" placeholder={deliveryType === 'pickup' ? "e.g. Lakeside, Pokhara" : "e.g. Supplier warehouse, Newroad"}
+                value={deliveryForm.pickup_location}
                 onChange={e => setDeliveryForm({ ...deliveryForm, pickup_location: e.target.value })}
                 className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-chalk text-[#1c1917] placeholder-[#71717a] outline-none focus:border-[#1c1917] focus:bg-white transition-all" />
             </div>
             <div>
-              <label className="block text-xs font-bold text-[#1c1917] mb-1.5">Delivery Location</label>
-              <input type="text" placeholder="e.g. New Baneshwor" value={deliveryForm.delivery_location}
-                onChange={e => setDeliveryForm({ ...deliveryForm, delivery_location: e.target.value })}
-                className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-chalk text-[#1c1917] placeholder-[#71717a] outline-none focus:border-[#1c1917] focus:bg-white transition-all" />
+              <label className="block text-xs font-bold text-[#1c1917] mb-1.5">
+                {deliveryType === 'pickup' ? 'Delivery Location' : 'Storage Address'}
+              </label>
+              <div className="flex items-center gap-2">
+                <input type="text" placeholder={deliveryType === 'pickup' ? "e.g. New Baneshwor" : "Storage address (auto-filled)"}
+                  value={deliveryForm.delivery_location}
+                  onChange={e => setDeliveryForm({ ...deliveryForm, delivery_location: e.target.value })}
+                  className="flex-1 px-3 py-2.5 text-sm border border-border rounded-lg bg-chalk text-[#1c1917] placeholder-[#71717a] outline-none focus:border-[#1c1917] focus:bg-white transition-all" />
+                {deliveryType === 'dropoff' && deliveryForm.booking_id && (
+                  <button type="button"
+                    onClick={() => {
+                      const booking = bookings.find(b => b.id == deliveryForm.booking_id);
+                      if (booking) setDeliveryForm({ ...deliveryForm, delivery_location: booking.listing_location || '' });
+                    }}
+                    className="text-xs text-brick font-semibold hover:underline whitespace-nowrap">Use storage</button>
+                )}
+              </div>
             </div>
             <div className="sm:col-span-2">
               <label className="block text-xs font-bold text-[#1c1917] mb-1.5">Instructions (Optional)</label>
@@ -183,40 +226,88 @@ export default function Inventory() {
                 onChange={e => setDeliveryForm({ ...deliveryForm, instructions: e.target.value })}
                 className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-chalk text-[#1c1917] placeholder-[#71717a] outline-none focus:border-[#1c1917] focus:bg-white transition-all resize-none" />
             </div>
+            <div>
+              <label className="block text-xs font-bold text-[#1c1917] mb-1.5">Delivery Fee (Rs)</label>
+              <input type="number" min="0" placeholder="e.g. 500"
+                value={deliveryForm.delivery_fee || ''}
+                onChange={e => setDeliveryForm({ ...deliveryForm, delivery_fee: e.target.value })}
+                className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-chalk text-[#1c1917] placeholder-[#71717a] outline-none focus:border-[#1c1917] focus:bg-white transition-all" />
+            </div>
             {deliveryForm.booking_id && (
               <div className="sm:col-span-2">
-                <label className="block text-xs font-bold text-[#1c1917] mb-1.5">Select Items to Deliver</label>
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {getBookingItems(deliveryForm.booking_id).length === 0 ? (
-                    <p className="text-xs text-[#71717a]">No items in this space. Add items first.</p>
-                  ) : (
-                    getBookingItems(deliveryForm.booking_id).map(item => {
-                      const selected = deliveryForm.selectedItems.find(i => i.id === item.id)
-                      return (
-                        <div key={item.id} className={`flex items-center gap-3 p-2.5 rounded-lg border cursor-pointer transition-all ${
-                          selected ? 'border-[#1c1917] bg-chalk' : 'border-border hover:border-[#1c1917]'
-                        }`} onClick={() => toggleItemSelection(item)}>
-                          <input type="checkbox" checked={!!selected} readOnly className="w-4 h-4 accent-[#1c1917]" />
-                          <div className="flex-1">
-                            <p className="text-sm font-semibold text-[#1c1917]">{item.name}</p>
-                            <p className="text-xs text-[#71717a]">Available: {item.quantity}</p>
+                <label className="block text-xs font-bold text-[#1c1917] mb-1.5">
+                  {deliveryType === 'pickup' ? 'Select Items to Deliver' : 'Add Items to Inventory'}
+                </label>
+                {deliveryType === 'pickup' ? (
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {getBookingItems(deliveryForm.booking_id).length === 0 ? (
+                      <p className="text-xs text-[#71717a]">No items in this space. Add items first.</p>
+                    ) : (
+                      getBookingItems(deliveryForm.booking_id).map(item => {
+                        const selected = deliveryForm.selectedItems.find(i => i.id === item.id)
+                        return (
+                          <div key={item.id} className={`flex items-center gap-3 p-2.5 rounded-lg border cursor-pointer transition-all ${
+                            selected ? 'border-[#1c1917] bg-chalk' : 'border-border hover:border-[#1c1917]'
+                          }`} onClick={() => toggleItemSelection(item)}>
+                            <input type="checkbox" checked={!!selected} readOnly className="w-4 h-4 accent-[#1c1917]" />
+                            <div className="flex-1">
+                              <p className="text-sm font-semibold text-[#1c1917]">{item.name}</p>
+                              <p className="text-xs text-[#71717a]">Available: {item.quantity}</p>
+                            </div>
+                            {selected && (
+                              <input type="number" min="1" max={item.quantity} value={selected.quantity}
+                                onChange={e => { e.stopPropagation(); updateSelectedQuantity(item.id, e.target.value) }}
+                                onClick={e => e.stopPropagation()} className="w-16 px-2 py-1 text-xs border border-border rounded text-center" />
+                            )}
                           </div>
-                          {selected && (
-                            <input 
-                              type="number" 
-                              min="1" 
-                              max={item.quantity} 
-                              value={selected.quantity}
-                              onChange={e => { e.stopPropagation(); updateSelectedQuantity(item.id, e.target.value) }}
-                              onClick={e => e.stopPropagation()}
-                              className="w-16 px-2 py-1 text-xs border border-border rounded text-center"
-                            />
-                          )}
-                        </div>
-                      )
-                    })
-                  )}
-                </div>
+                        )
+                      })
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {deliveryForm.selectedItems.length > 0 && (
+                      <div className="space-y-2 mb-3">
+                        {deliveryForm.selectedItems.map((item, idx) => (
+                          <div key={idx} className="flex items-center gap-2 p-2.5 bg-chalk rounded-lg border border-border">
+                            <div className="flex-1 flex gap-2">
+                              <input type="text" placeholder="Item name" value={item.name}
+                                onChange={e => {
+                                  const updated = [...deliveryForm.selectedItems];
+                                  updated[idx].name = e.target.value;
+                                  setDeliveryForm(prev => ({ ...prev, selectedItems: updated }));
+                                }} className="flex-1 px-2 py-1.5 text-xs border border-border rounded bg-white" />
+                              <input type="text" placeholder="Category" value={item.category}
+                                onChange={e => {
+                                  const updated = [...deliveryForm.selectedItems];
+                                  updated[idx].category = e.target.value;
+                                  setDeliveryForm(prev => ({ ...prev, selectedItems: updated }));
+                                }} className="w-24 px-2 py-1.5 text-xs border border-border rounded bg-white" />
+                              <input type="number" min="1" placeholder="Qty" value={item.quantity}
+                                onChange={e => {
+                                  const updated = [...deliveryForm.selectedItems];
+                                  updated[idx].quantity = parseInt(e.target.value) || 0;
+                                  setDeliveryForm(prev => ({ ...prev, selectedItems: updated }));
+                                }} className="w-16 px-2 py-1.5 text-xs border border-border rounded bg-white text-center" />
+                            </div>
+                            <button onClick={() => {
+                              const updated = deliveryForm.selectedItems.filter((_, i) => i !== idx);
+                              setDeliveryForm(prev => ({ ...prev, selectedItems: updated }));
+                            }} className="p-1 text-[#71717a] hover:text-brick"><X size={14} /></button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <button type="button" onClick={() => {
+                      setDeliveryForm(prev => ({
+                        ...prev,
+                        selectedItems: [...prev.selectedItems, { id: Date.now(), name: '', category: '', quantity: 1 }]
+                      }));
+                    }} className="w-full py-2 border-2 border-dashed border-border rounded-lg text-xs text-[#71717a] hover:border-[#1c1917] hover:text-[#1c1917] transition-colors font-semibold">
+                      + Add Item
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -245,11 +336,11 @@ export default function Inventory() {
             ))}
             <div className="sm:col-span-2">
               <label className="block text-xs font-bold text-[#1c1917] mb-1.5">Storage Space (Optional)</label>
-              {bookings.length > 0 ? (
+              {bookings.filter(b => b.status === 'active' || b.status === 'approved').length > 0 ? (
                 <select value={form.booking_id} onChange={e => setForm({ ...form, booking_id: e.target.value })}
                   className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-chalk text-[#1c1917] outline-none focus:border-[#1c1917] focus:bg-white transition-all">
                   <option value="">No space selected</option>
-                  {bookings.map(b => (
+                  {bookings.filter(b => b.status === 'active' || b.status === 'approved').map(b => (
                     <option key={b.id} value={b.id}>{b.listing_title} — {b.listing_location}</option>
                   ))}
                 </select>

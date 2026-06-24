@@ -11,7 +11,9 @@ const createTable = async () => {
       delivery_location VARCHAR(255) NOT NULL,
       items JSON,
       quantity INT DEFAULT 0,
+      delivery_fee DECIMAL(10,2) DEFAULT 0,
       instructions TEXT,
+      type ENUM('pickup','dropoff') DEFAULT 'pickup',
       status ENUM('pending','accepted','picked_up','in_transit','delivered','cancelled') DEFAULT 'pending',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE,
@@ -54,10 +56,10 @@ const findByCourier = async (courierId) => {
   return rows;
 };
 
-const create = async ({ booking_id, seller_id, pickup_location, delivery_location, items, quantity, instructions }) => {
+const create = async ({ booking_id, seller_id, pickup_location, delivery_location, items, quantity, delivery_fee, instructions, type }) => {
   const [result] = await pool.query(
-    'INSERT INTO delivery_requests (booking_id, seller_id, pickup_location, delivery_location, items, quantity, instructions) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    [booking_id, seller_id, pickup_location, delivery_location, JSON.stringify(items), quantity, instructions || null]
+    'INSERT INTO delivery_requests (booking_id, seller_id, pickup_location, delivery_location, items, quantity, delivery_fee, instructions, type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    [booking_id, seller_id, pickup_location, delivery_location, JSON.stringify(items), quantity, delivery_fee || 0, instructions || null, type || 'pickup']
   );
   return result.insertId;
 };

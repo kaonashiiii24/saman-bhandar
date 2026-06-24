@@ -19,20 +19,26 @@ import Inventory from '../pages/seller/Inventory'
 import Chat from '../pages/seller/Chat'
 import Payments from '../pages/seller/Payments'
 import SellerProfile from '../pages/seller/Profile'
+import SellerDocumentation from '../pages/seller/Documentation'
 import HostDashboard from '../pages/host/HostDashboard'
 import MyListings from '../pages/host/MyListings'
 import ManageBookings from '../pages/host/ManageBookings'
 import Earnings from '../pages/host/Earnings'
 import HostProfile from '../pages/host/Profile'
+import HostDocumentation from '../pages/host/Documentation'
 import CourierDashboard from '../pages/courier/CourierDashboard'
 import AvailableJobs from '../pages/courier/AvailableJobs'
 import ActiveDeliveries from '../pages/courier/ActiveDeliveries'
 import CourierProfile from '../pages/courier/Profile'
+import CourierDocumentation from '../pages/courier/Documentation'
 import AdminDashboard from '../pages/admin/AdminDashboard'
 import ManageUsers from '../pages/admin/ManageUsers'
 import ManageListings from '../pages/admin/ManageListings'
 import Analytics from '../pages/admin/Analytics'
-import NotFound from '../pages/NotFound';
+import AdminDocumentation from '../pages/admin/Documentation'
+import NotFound from '../pages/NotFound'
+import PaymentSimulate from '../pages/public/PaymentSimulate'
+
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useAuth()
@@ -58,6 +64,7 @@ export default function AppRoutes() {
         <Route path="/services" element={<Services />} />
         <Route path="/about" element={<AboutUs />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/payment/simulate" element={<PaymentSimulate />} />
       </Route>
 
       <Route element={<ProtectedRoute allowedRoles={['seller']}><SellerLayout /></ProtectedRoute>}>
@@ -67,6 +74,7 @@ export default function AppRoutes() {
         <Route path="/seller/chat" element={<Chat />} />
         <Route path="/seller/payments" element={<Payments />} />
         <Route path="/seller/profile" element={<SellerProfile />} />
+        <Route path="/seller/docs" element={<SellerDocumentation />} />
       </Route>
 
       <Route element={<ProtectedRoute allowedRoles={['host']}><HostLayout /></ProtectedRoute>}>
@@ -76,6 +84,7 @@ export default function AppRoutes() {
         <Route path="/host/chat" element={<Chat />} />
         <Route path="/host/earnings" element={<Earnings />} />
         <Route path="/host/profile" element={<HostProfile />} />
+        <Route path="/host/docs" element={<HostDocumentation />} />
       </Route>
 
       <Route element={<ProtectedRoute allowedRoles={['courier']}><CourierLayout /></ProtectedRoute>}>
@@ -84,6 +93,7 @@ export default function AppRoutes() {
         <Route path="/courier/deliveries" element={<ActiveDeliveries />} />
         <Route path="/courier/chat" element={<Chat />} />
         <Route path="/courier/profile" element={<CourierProfile />} />
+        <Route path="/courier/docs" element={<CourierDocumentation />} />
       </Route>
 
       <Route element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout /></ProtectedRoute>}>
@@ -91,9 +101,10 @@ export default function AppRoutes() {
         <Route path="/admin/users" element={<ManageUsers />} />
         <Route path="/admin/listings" element={<ManageListings />} />
         <Route path="/admin/analytics" element={<Analytics />} />
+        <Route path="/admin/docs" element={<AdminDocumentation />} />
       </Route>
 
-     <Route path="*" element={<NotFound />} />
+      <Route path="*" element={<NotFound />} />
     </Routes>
   )
 }

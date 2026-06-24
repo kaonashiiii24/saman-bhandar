@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Building2, CalendarCheck, DollarSign, TrendingUp, ArrowRight, Clock, CheckCircle2, AlertCircle, Plus } from 'lucide-react'
+import { Building2, CalendarCheck, DollarSign, TrendingUp, ArrowRight, Clock, CheckCircle2, AlertCircle, Plus, BookOpen } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import StatCard from '../../components/common/StatCard'
 import { useAuth } from '../../hooks/useAuth'
@@ -29,13 +29,6 @@ export default function HostDashboard() {
       .finally(() => setLoading(false))
   }, [])
 
-  const greeting = () => {
-    const h = new Date().getHours()
-    if (h < 12) return 'Good morning'
-    if (h < 17) return 'Good afternoon'
-    return 'Good evening'
-  }
-
   const activeBookings = bookings.filter(b => b.status === 'active').length
   const pendingBookings = bookings.filter(b => b.status === 'pending').length
   const totalRevenue = bookings.filter(b => ['active', 'completed'].includes(b.status)).reduce((sum, b) => sum + Number(b.total_amount), 0)
@@ -44,8 +37,7 @@ export default function HostDashboard() {
     <div className="space-y-5 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-in-up">
         <div>
-          <p className="text-xs font-semibold text-[#71717a] uppercase tracking-wider">{greeting()}</p>
-          <h2 className="font-display font-black text-xl sm:text-2xl text-[#1c1917] mt-0.5">{user?.full_name || 'Host'} </h2>
+          <h2 className="font-display font-black text-xl sm:text-2xl text-[#1c1917]">Hello {user?.full_name || 'Host'}</h2>
         </div>
         <Link to="/host/listings" className="inline-flex items-center gap-2 bg-[#1c1917] hover:bg-brick text-white font-display font-bold px-4 py-2.5 rounded-lg transition-colors text-sm shrink-0 self-start sm:self-auto">
           <Plus size={15} /> Add Listing
@@ -124,9 +116,27 @@ export default function HostDashboard() {
               ))}
             </div>
           </div>
-          <div className="bg-brick-light border border-brick/15 rounded-xl p-4">
-            <p className="text-xs font-bold text-brick mb-1">💡 Tip</p>
-            <p className="text-xs text-[#3a3a3a] leading-relaxed">Add photos and descriptions to get 3x more bookings.</p>
+
+          <div className="bg-white border border-border rounded-xl p-4 sm:p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <BookOpen size={15} className="text-[#71717a]" />
+              <h3 className="font-display font-bold text-[#1c1917] text-sm">Getting Started</h3>
+            </div>
+            <div className="space-y-3">
+              {[
+                { step: '1', text: 'Create your first storage listing with photos' },
+                { step: '2', text: 'Set your price per month and availability' },
+                { step: '3', text: 'Review and approve booking requests' },
+                { step: '4', text: 'Track earnings and manage your spaces' },
+              ].map((s, i) => (
+                <div key={i} className="flex items-start gap-2.5">
+                  <div className="w-5 h-5 rounded-full bg-chalk flex items-center justify-center shrink-0 mt-0.5">
+                    <span className="text-[10px] font-bold text-[#71717a]">{s.step}</span>
+                  </div>
+                  <p className="text-xs text-[#52525b] leading-relaxed">{s.text}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

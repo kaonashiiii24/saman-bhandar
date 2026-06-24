@@ -83,7 +83,10 @@ export default function AvailableJobs() {
               </div>
             </div>
             <div className="flex items-center justify-between sm:flex-col sm:items-end gap-2 shrink-0 pl-12 sm:pl-0">
-              <p className="font-display font-black text-xl sm:text-2xl text-[#1c1917]">{j.seller_name}</p>
+              <p className="font-display font-black text-lg text-[#1c1917]">
+                {j.delivery_fee > 0 ? `Rs ${Number(j.delivery_fee).toLocaleString()}` : 'Fee not set'}
+              </p>
+              <p className="text-[10px] text-[#71717a]">Seller: {j.seller_name}</p>
               {accepted.includes(j.id) ? (
                 <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-2 rounded-lg">
                   <CheckCircle2 size={13} /> Accepted

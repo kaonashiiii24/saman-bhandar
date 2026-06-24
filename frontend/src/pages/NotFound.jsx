@@ -1,19 +1,24 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 export default function NotFound() {
   const navigate = useNavigate();
   const [count, setCount] = useState(10);
+  const navigateCalled = useRef(false);
 
   useEffect(() => {
     const t = setInterval(() => {
-      setCount((c) => {
-        if (c <= 1) { clearInterval(t); navigate("/"); }
-        return c - 1;
-      });
+      setCount((c) => c - 1);
     }, 1000);
     return () => clearInterval(t);
-  }, [navigate]);
+  }, []);
+
+  useEffect(() => {
+    if (count <= 0 && !navigateCalled.current) {
+      navigateCalled.current = true;
+      navigate("/");
+    }
+  }, [count, navigate]);
 
   return (
     <div className="min-h-screen bg-chalk flex flex-col items-center justify-center px-4 text-center">
@@ -41,7 +46,7 @@ export default function NotFound() {
           </button>
         </div>
         <div className="mt-12 flex flex-wrap justify-center gap-4 text-sm text-muted">
-          <Link to="/browse" className="hover:text-brick transition-colors">Browse listings</Link>
+          <Link to="/listings" className="hover:text-brick transition-colors">Browse listings</Link>
           <Link to="/services" className="hover:text-brick transition-colors">Services</Link>
           <Link to="/contact" className="hover:text-brick transition-colors">Contact</Link>
           <Link to="/login" className="hover:text-brick transition-colors">Login</Link>

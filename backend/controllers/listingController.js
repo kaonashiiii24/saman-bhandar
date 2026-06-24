@@ -79,14 +79,16 @@ const deleteListing = async (req, res) => {
     if (!listing) return error(res, 'Listing not found', 404);
     if (listing.host_id !== req.user.id && req.user.role !== 'admin') return error(res, 'Unauthorized', 403);
     
-    const Booking = require('../models/Booking');
-    const bookings = await Booking.findByListing(req.params.id);
-    const activeBookings = bookings.filter(b => 
-      ['pending', 'approved', 'active', 'picking_up', 'in_transit'].includes(b.status)
-    );
-    
-    if (activeBookings.length > 0) {
-      return error(res, `Cannot delete this listing. It has ${activeBookings.length} active booking(s). Cancel or complete them first.`, 400);
+    if (req.user.role !== 'admin') {
+      const Booking = require('../models/Booking');
+      const bookings = await Booking.findByListing(req.params.id);
+      const activeBookings = bookings.filter(b => 
+        ['pending', 'approved', 'active', 'picking_up', 'in_transit'].includes(b.status)
+      );
+      
+      if (activeBookings.length > 0) {
+        return error(res, `Cannot delete this listing. It has ${activeBookings.length} active booking(s). Cancel or complete them first.`, 400);
+      }
     }
     
     if (listing.image_url) {
@@ -95,6 +97,7 @@ const deleteListing = async (req, res) => {
         fs.unlinkSync(imagePath);
       }
     }
+    
     await Listing.remove(req.params.id);
     return success(res, {}, 'Listing deleted');
   } catch (err) { return error(res, err.message); }

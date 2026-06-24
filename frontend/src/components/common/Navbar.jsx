@@ -14,7 +14,7 @@ export default function Navbar() {
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20)
-    window.addEventListener('scroll', onScroll)
+    window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
@@ -36,6 +36,8 @@ export default function Navbar() {
   const handleLogout = () => { logout(); navigate('/') }
   const getDashboardLink = () => `/${user.role}/dashboard`
 
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
+
   const navLinks = [
     { to: '/listings', label: 'Find Storage' },
     { to: '/services', label: 'Services' },
@@ -44,7 +46,7 @@ export default function Navbar() {
   ]
 
   return (
-    <nav className={`sticky top-0 z-50 transition-all duration-300 ${
+    <nav className={`sticky top-0 z-50 transition-all duration-500 ${
       scrolled
         ? 'bg-white/95 backdrop-blur-md shadow-sm border-b border-border'
         : 'bg-[#FAFAF9] border-b border-border'
@@ -53,28 +55,28 @@ export default function Navbar() {
         <div className="flex items-center h-16 gap-8">
 
           <Link
-  to="/"
-  onClick={(e) => {
-    if (location.pathname === '/') {
-      e.preventDefault()
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-    }
-  }}
-  className="flex items-center gap-2.5 flex-shrink-0 group"
->
-  <div className="w-8 h-8 bg-[#1a1a1a] rounded-md flex items-center justify-center transition-transform duration-200 group-hover:scale-105">
-    <Package size={16} className="text-white" />
-  </div>
-  <span className="font-display font-black text-lg text-[#1a1a1a] tracking-tight">
-    Saman<span className="text-brick">Bhandar</span>
-  </span>
-</Link>
+            to="/"
+            onClick={(e) => {
+              if (location.pathname === '/') {
+                e.preventDefault()
+                scrollToTop()
+              }
+            }}
+            className="flex items-center gap-2.5 flex-shrink-0 group"
+          >
+            <div className="w-8 h-8 bg-[#1a1a1a] rounded-md flex items-center justify-center transition-transform duration-200 group-hover:scale-105">
+              <Package size={16} className="text-white" />
+            </div>
+            <span className="font-display font-black text-lg text-[#1a1a1a] tracking-tight">
+              Saman<span className="text-brick">Bhandar</span>
+            </span>
+          </Link>
 
-   
           <ul className="hidden lg:flex items-center gap-0.5 flex-1">
             {navLinks.map((link) => (
               <li key={link.to}>
                 <Link to={link.to}
+                  onClick={scrollToTop}
                   className={`text-sm font-medium px-3.5 py-2 rounded-md transition-all duration-150 ${
                     location.pathname === link.to
                       ? 'text-[#1a1a1a] bg-chalk-dark font-semibold'
@@ -88,22 +90,26 @@ export default function Navbar() {
 
           <div className="hidden lg:flex items-center ml-auto" ref={dropdownRef}>
             <div className="relative">
-              <button
-                onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="flex items-center gap-2 bg-[#1a1a1a] hover:bg-[#2d2d2d] text-white text-sm font-display font-bold px-4 py-2.5 rounded-md transition-colors duration-150"
-              >
-                {user ? (
-                  <>
-                    <div className="w-5 h-5 rounded bg-white/15 flex items-center justify-center text-white text-xs font-bold">
-                      {user.full_name?.charAt(0).toUpperCase()}
-                    </div>
-                    {user.full_name?.split(' ')[0]}
-                  </>
-                ) : (
-                  'Get Started'
-                )}
-                <ChevronDown size={14} className={`transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
+              {user ? (
+                <button
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  className="flex items-center gap-2.5 bg-[#1a1a1a] hover:bg-[#2d2d2d] text-white text-sm font-semibold px-4 py-2.5 rounded-md transition-colors duration-150"
+                >
+                  <div className="w-5 h-5 rounded bg-white/15 flex items-center justify-center text-white text-xs font-bold">
+                    {user.full_name?.charAt(0).toUpperCase()}
+                  </div>
+                  {user.full_name?.split(' ')[0]}
+                  <ChevronDown size={14} className={`transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+              ) : (
+                <button
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  className="flex items-center gap-2 bg-[#1a1a1a] hover:bg-[#2d2d2d] text-white text-sm font-semibold px-5 py-2.5 rounded-md transition-colors duration-150"
+                >
+                  Sign in
+                  <ChevronDown size={14} className={`transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+              )}
 
               {dropdownOpen && (
                 <div className="absolute right-0 top-[calc(100%+8px)] bg-white border border-border rounded-xl shadow-md min-w-[200px] z-50 p-1.5 animate-scale-in">
@@ -168,6 +174,7 @@ export default function Navbar() {
           <div className="max-w-container mx-auto px-4 py-4 space-y-1">
             {navLinks.map((link) => (
               <Link key={link.to} to={link.to}
+                onClick={scrollToTop}
                 className={`block px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
                   location.pathname === link.to
                     ? 'bg-chalk-dark text-[#1a1a1a] font-semibold'

@@ -5,6 +5,7 @@ import StatCard from '../../components/common/StatCard'
 import Loader from '../../components/common/Loader'
 import AlertMessage from '../../components/common/AlertMessage'
 
+
 const STATUS_MAP = {
   completed: { label: 'Paid', color: 'bg-emerald-100 text-emerald-700', icon: CheckCircle2 },
   pending: { label: 'Pending', color: 'bg-amber-100 text-amber-700', icon: Clock },

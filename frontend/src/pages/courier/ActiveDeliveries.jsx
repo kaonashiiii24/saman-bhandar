@@ -91,7 +91,12 @@ export default function ActiveDeliveries() {
                     <MapPin size={11} className="text-emerald-500 mt-0.5 shrink-0" />
                     <span className="truncate">Drop: {d.delivery_location}</span>
                   </div>
-                  <p className="text-xs text-[#71717a] mt-0.5">Seller: {d.seller_name} · {d.quantity} items</p>
+                  <div className="flex items-center gap-3 mt-1.5">
+                    <span className="text-xs text-[#71717a]">{d.seller_name} · {d.quantity} items</span>
+                    {d.delivery_fee > 0 && (
+                      <span className="text-xs font-bold text-[#1c1917]">Rs {Number(d.delivery_fee).toLocaleString()}</span>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="text-right shrink-0">

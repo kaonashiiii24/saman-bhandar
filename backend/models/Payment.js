@@ -54,8 +54,8 @@ const create = async ({ booking_id, seller_id, amount, method, transaction_id })
   return result.insertId;
 };
 
-const updateStatus = async (id, status) => {
-  await pool.query('UPDATE payments SET status = ? WHERE id = ?', [status, id]);
+const updateStatus = async (transactionId, status) => {
+  await pool.query('UPDATE payments SET status = ? WHERE transaction_id = ?', [status, transactionId]);
 };
 
 module.exports = { createTable, findBySeller, findByBooking, findAll, create, updateStatus };

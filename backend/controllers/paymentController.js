@@ -16,19 +16,28 @@ const getAllPayments = async (req, res) => {
   } catch (err) { return error(res, err.message); }
 };
 
-const initiatePayment = async (req, res) => {
+const verifySimulatedPayment = async (req, res) => {
   try {
-    const { booking_id, method } = req.body;
-    if (!booking_id || !method) return error(res, 'Booking and method required', 400);
-    const booking = await Booking.findById(booking_id);
+    const { bookingId, txn, method } = req.body;
+    
+    if (!bookingId) return error(res, 'Missing booking ID', 400);
+    
+    const booking = await Booking.findById(bookingId);
     if (!booking) return error(res, 'Booking not found', 404);
-    if (booking.seller_id !== req.user.id) return error(res, 'Unauthorized', 403);
-    const transaction_id = `TXN-${Date.now()}`;
-    const id = await Payment.create({ booking_id, seller_id: req.user.id, amount: booking.total_amount, method, transaction_id });
-    await Payment.updateStatus(id, 'completed');
-    await Booking.updateStatus(booking_id, 'active');
-    return success(res, { transaction_id }, 'Payment successful', 201);
+    
+    await Payment.create({
+      booking_id: bookingId,
+      seller_id: booking.seller_id,
+      amount: booking.total_amount,
+      method: method || 'simulated',
+      transaction_id: txn || `TXN-${Date.now()}`,
+      status: 'completed'
+    });
+    
+    await Booking.updateStatus(bookingId, 'active');
+    
+    return success(res, {}, 'Payment verified and booking activated');
   } catch (err) { return error(res, err.message); }
 };
 
-module.exports = { getMyPayments, getAllPayments, initiatePayment };
+module.exports = { getMyPayments, getAllPayments, verifySimulatedPayment };

@@ -45,5 +45,14 @@ const update = async (id, fields) => {
 const remove = async (id) => {
   await pool.query('DELETE FROM inventory WHERE id = ?', [id]);
 };
+const findBySellerAndBooking = async (seller_id, booking_id, name) => {
+  const [rows] = await pool.query(
+    'SELECT * FROM inventory WHERE seller_id = ? AND booking_id = ? AND name = ?',
+    [seller_id, booking_id, name]
+  );
+  return rows[0];
+};
 
-module.exports = { createTable, findBySeller, findById, create, update, remove };
+
+
+module.exports = { createTable, findBySeller, findById, create, update, remove , findBySellerAndBooking };

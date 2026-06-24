@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Package, CalendarCheck, CreditCard, TrendingUp, ArrowRight, Clock, CheckCircle2, AlertCircle, Plus, Warehouse } from 'lucide-react'
+import { Package, CalendarCheck, CreditCard, TrendingUp, ArrowRight, Clock, CheckCircle2, AlertCircle, Plus, Warehouse, BookOpen } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import StatCard from '../../components/common/StatCard'
 import { useAuth } from '../../hooks/useAuth'
@@ -46,13 +46,6 @@ export default function SellerDashboard() {
       .finally(() => setLoading(false))
   }, [])
 
-  const greeting = () => {
-    const h = new Date().getHours()
-    if (h < 12) return 'Good morning'
-    if (h < 17) return 'Good afternoon'
-    return 'Good evening'
-  }
-
   const totalSpent = payments.filter(p => p.status === 'completed').reduce((sum, p) => sum + Number(p.amount), 0)
   const activeBookings = bookings.filter(b => b.status === 'active').length
 
@@ -60,8 +53,7 @@ export default function SellerDashboard() {
     <div className="space-y-5 sm:space-y-6">
       <div ref={headerRef} className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all duration-500 ${headerVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
         <div>
-          <p className="text-xs font-semibold text-[#71717a] uppercase tracking-wider">{greeting()}</p>
-          <h2 className="font-display font-black text-xl sm:text-2xl text-[#1c1917] mt-0.5">{user?.full_name || 'Seller'} </h2>
+          <h2 className="font-display font-black text-xl sm:text-2xl text-[#1c1917]">Hello {user?.full_name || 'Seller'}</h2>
           <p className="text-xs text-[#71717a] mt-1 hidden sm:block">Here's what's happening with your storage today.</p>
         </div>
         <Link to="/listings" className="inline-flex items-center gap-2 bg-[#1c1917] hover:bg-brick text-white font-display font-bold px-4 py-2.5 rounded-lg transition-colors text-sm shrink-0 self-start sm:self-auto">
@@ -88,9 +80,9 @@ export default function SellerDashboard() {
             <div className="px-5 py-12 text-center">
               <Warehouse size={32} className="text-border mx-auto mb-3" />
               <p className="font-display font-bold text-[#1c1917] text-sm mb-1">No bookings yet</p>
-              <p className="text-[#71717a] text-xs mb-3">Find a storage space to get started</p>
-              <Link to="/listings" className="inline-flex items-center gap-1.5 text-xs font-semibold text-brick hover:underline">
-                Browse storage <ArrowRight size={12} />
+              <p className="text-[#71717a] text-xs mb-4">Find a storage space to get started</p>
+              <Link to="/listings" className="inline-flex items-center gap-2 bg-[#1c1917] hover:bg-brick text-white font-display font-bold px-5 py-2.5 rounded-lg transition-colors text-sm">
+                <Plus size={15} /> Book a Space Now
               </Link>
             </div>
           ) : (
@@ -144,9 +136,27 @@ export default function SellerDashboard() {
               ))}
             </div>
           </div>
-          <div className="bg-brick-light border border-brick/15 rounded-xl p-4">
-            <p className="text-xs font-bold text-brick mb-1">💡 Pro Tip</p>
-            <p className="text-xs text-[#3a3a3a] leading-relaxed">Book storage for 3+ months to get up to 20% off on most listings.</p>
+
+          <div className="bg-white border border-border rounded-xl p-4 sm:p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <BookOpen size={15} className="text-[#71717a]" />
+              <h3 className="font-display font-bold text-[#1c1917] text-sm">Getting Started</h3>
+            </div>
+            <div className="space-y-3">
+              {[
+                { step: '1', text: 'Browse and book a storage space near you' },
+                { step: '2', text: 'Add your inventory items to track them' },
+                { step: '3', text: 'Create delivery requests when ready' },
+                { step: '4', text: 'Chat with hosts and couriers in real-time' },
+              ].map((s, i) => (
+                <div key={i} className="flex items-start gap-2.5">
+                  <div className="w-5 h-5 rounded-full bg-chalk flex items-center justify-center shrink-0 mt-0.5">
+                    <span className="text-[10px] font-bold text-[#71717a]">{s.step}</span>
+                  </div>
+                  <p className="text-xs text-[#52525b] leading-relaxed">{s.text}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
