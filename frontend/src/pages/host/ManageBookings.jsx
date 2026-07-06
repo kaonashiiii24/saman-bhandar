@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { CheckCircle2, XCircle, Clock, User, CalendarCheck, Package, ChevronDown, ChevronUp } from 'lucide-react'
+import { CheckCircle2, XCircle, User, CalendarCheck, Package, ChevronDown, ChevronUp, Check, MoreHorizontal } from 'lucide-react'
 import { getHostBookings, updateBookingStatus } from '../../services/bookingService'
 import { getListingItems } from '../../services/listingService'
 import Loader from '../../components/common/Loader'
@@ -24,6 +24,7 @@ export default function ManageBookings() {
   const [expandedBooking, setExpandedBooking] = useState(null)
   const [bookingItems, setBookingItems] = useState({})
   const [itemsLoading, setItemsLoading] = useState({})
+  const [menuOpen, setMenuOpen] = useState(null)
 
   useEffect(() => {
     getHostBookings()
@@ -31,6 +32,16 @@ export default function ManageBookings() {
       .catch(() => setError('Failed to load bookings'))
       .finally(() => setLoading(false))
   }, [])
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuOpen && !e.target.closest('.dropdown-menu')) {
+        setMenuOpen(null)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [menuOpen])
 
   const handleApprove = async (id) => {
     try {
@@ -44,6 +55,17 @@ export default function ManageBookings() {
       await updateBookingStatus(id, 'cancelled')
       setBookings(bookings.map(b => b.id === id ? { ...b, status: 'cancelled' } : b))
     } catch { setError('Failed to reject') }
+  }
+
+  const handleComplete = async (id) => {
+    try {
+      await updateBookingStatus(id, 'completed')
+      setBookings(bookings.map(b => b.id === id ? { ...b, status: 'completed' } : b))
+      setMenuOpen(null)
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to mark as completed')
+      setMenuOpen(null)
+    }
   }
 
   const toggleItems = async (booking) => {
@@ -76,7 +98,7 @@ export default function ManageBookings() {
       {error && <AlertMessage type="error" message={error} />}
 
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
-        {['all', 'pending', 'approved', 'completed', 'cancelled'].map(f => (
+        {['all', 'pending', 'approved', 'active', 'completed', 'cancelled'].map(f => (
           <button key={f} onClick={() => setFilter(f)}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize whitespace-nowrap transition-all shrink-0 ${filter === f ? 'bg-[#1c1917] text-white' : 'bg-white border border-border text-[#71717a] hover:border-[#1c1917]'}`}>
             {f} {f !== 'all' && bookings.filter(b => b.status === f).length > 0 && `(${bookings.filter(b => b.status === f).length})`}
@@ -118,6 +140,7 @@ export default function ManageBookings() {
                   </div>
                   <div className="flex items-center justify-between sm:flex-col sm:items-end gap-2 shrink-0 pl-12 sm:pl-0">
                     <p className="font-display font-black text-[#1c1917]">Rs {Number(b.total_amount).toLocaleString()}</p>
+                    
                     {b.status === 'pending' && (
                       <div className="flex gap-2">
                         <button onClick={() => handleApprove(b.id)}
@@ -128,6 +151,34 @@ export default function ManageBookings() {
                           className="inline-flex items-center gap-1 text-xs font-semibold text-brick hover:bg-brick-light px-3 py-1.5 rounded-lg transition-colors">
                           <XCircle size={12} /> Reject
                         </button>
+                      </div>
+                    )}
+                    
+                    {(b.status === 'approved' || b.status === 'active') && (
+                      <div className="relative dropdown-menu">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setMenuOpen(menuOpen === b.id ? null : b.id)
+                          }}
+                          className="p-1.5 rounded-lg text-[#71717a] hover:bg-chalk hover:text-[#1c1917] transition-colors"
+                        >
+                          <MoreHorizontal size={18} />
+                        </button>
+                        {menuOpen === b.id && (
+                          <div className="absolute right-0 top-full mt-1 bg-white border border-border rounded-xl shadow-lg py-1 w-48 z-50 animate-scale-in origin-top-right">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleComplete(b.id)
+                              }}
+                              className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-[#1c1917] hover:bg-chalk transition-colors"
+                            >
+                              <Check size={14} className="text-blue-600" />
+                              Mark as Completed
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

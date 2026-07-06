@@ -20,10 +20,9 @@ const createTable = async () => {
     )
   `);
 };
-
 const findBySeller = async (seller_id) => {
   const [rows] = await pool.query(`
-    SELECT b.*, l.title as listing_title, l.location as listing_location, u.full_name as host_name
+    SELECT b.*, l.title as listing_title, l.location as listing_location, u.full_name as host_name, l.host_id
     FROM bookings b
     JOIN listings l ON b.listing_id = l.id
     JOIN users u ON l.host_id = u.id

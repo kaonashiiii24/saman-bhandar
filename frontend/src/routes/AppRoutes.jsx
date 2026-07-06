@@ -40,6 +40,7 @@ import NotFound from '../pages/NotFound'
 import PaymentSimulate from '../pages/public/PaymentSimulate'
 
 
+
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useAuth()
   if (loading) return (
@@ -64,7 +65,7 @@ export default function AppRoutes() {
         <Route path="/services" element={<Services />} />
         <Route path="/about" element={<AboutUs />} />
         <Route path="/contact" element={<Contact />} />
-        <Route path="/payment/simulate" element={<PaymentSimulate />} />
+        <Route path="/payment-simulate" element={<PaymentSimulate />} />
       </Route>
 
       <Route element={<ProtectedRoute allowedRoles={['seller']}><SellerLayout /></ProtectedRoute>}>

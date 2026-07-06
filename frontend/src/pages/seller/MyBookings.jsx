@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { CalendarCheck, Search, Clock, CheckCircle2, AlertCircle, MapPin, X, Star, Package, ArrowRight, Plus } from 'lucide-react'
 import { getMyBookings, cancelBooking } from '../../services/bookingService'
 import { checkCanReview, submitReview } from '../../services/reviewService'
+import api from '../../services/api'
 import Loader from '../../components/common/Loader'
 import AlertMessage from '../../components/common/AlertMessage'
 import usePagination from '../../hooks/usePagination'
@@ -140,23 +141,14 @@ function PaymentModal({ booking, onSuccess, onClose }) {
         </div>
         <div className="p-5 space-y-3">
           <p className="text-xs font-semibold text-[#1c1917]">Select payment method</p>
-          
           <button
             onClick={() => handlePayment('esewa')}
             disabled={loading}
             className="w-full flex items-center justify-between p-4 border-2 border-border rounded-xl hover:border-emerald-500 hover:bg-emerald-50/30 transition-all group"
           >
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center shadow-sm">
-                <img 
-                  src="https://esewa.com.np/images/esewa-icon.png" 
-                  alt="eSewa" 
-                  className="w-8 h-8 object-contain"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                    e.target.parentElement.innerHTML = '<span class="text-emerald-600 font-black text-lg">e₹</span>';
-                  }}
-                />
+              <div className="w-12 h-12 rounded-xl bg-emerald-500 flex items-center justify-center shadow-sm">
+                <span className="text-white font-black text-lg leading-none">e₹</span>
               </div>
               <div className="text-left">
                 <p className="text-sm font-bold text-[#1c1917]">eSewa</p>
@@ -165,23 +157,14 @@ function PaymentModal({ booking, onSuccess, onClose }) {
             </div>
             <ArrowRight size={16} className="text-[#71717a] group-hover:text-emerald-600 group-hover:translate-x-0.5 transition-all" />
           </button>
-
           <button
             onClick={() => handlePayment('khalti')}
             disabled={loading}
             className="w-full flex items-center justify-between p-4 border-2 border-border rounded-xl hover:border-purple-500 hover:bg-purple-50/30 transition-all group"
           >
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center shadow-sm">
-                <img 
-                  src="https://khalti.com/static/khalti-logo.svg" 
-                  alt="Khalti" 
-                  className="w-8 h-8 object-contain"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                    e.target.parentElement.innerHTML = '<span class="text-purple-600 font-black text-lg">K</span>';
-                  }}
-                />
+              <div className="w-12 h-12 rounded-xl bg-purple-600 flex items-center justify-center shadow-sm">
+                <span className="text-white font-black text-lg leading-none">K</span>
               </div>
               <div className="text-left">
                 <p className="text-sm font-bold text-[#1c1917]">Khalti</p>
@@ -190,6 +173,74 @@ function PaymentModal({ booking, onSuccess, onClose }) {
             </div>
             <ArrowRight size={16} className="text-[#71717a] group-hover:text-purple-600 group-hover:translate-x-0.5 transition-all" />
           </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ExtendModal({ booking, onSuccess, onClose }) {
+  const [newEndDate, setNewEndDate] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [summary, setSummary] = useState(null)
+
+  const handleExtend = async () => {
+    if (!newEndDate) { setError('Please select a new end date'); return }
+    setLoading(true)
+    setError('')
+    try {
+      const res = await api.put(`/bookings/${booking.id}/extend`, { new_end_date: newEndDate })
+      setSummary(res.data.data)
+      onSuccess()
+    } catch (err) {
+      setError(err.response?.data?.message || 'Extension failed')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
+      <div className="bg-white rounded-2xl w-full max-w-sm shadow-xl animate-fade-in-up">
+        <div className="p-5 border-b border-border">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-display font-bold text-[#1c1917] text-sm">Extend Booking</p>
+              <p className="text-xs text-[#71717a] mt-0.5 truncate max-w-[220px]">{booking.listing_title}</p>
+            </div>
+            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-chalk transition-colors">
+              <X size={16} className="text-[#71717a]" />
+            </button>
+          </div>
+          <div className="mt-4 space-y-3">
+            <div>
+              <label className="block text-xs font-bold text-[#1c1917] mb-1.5">Current End Date</label>
+              <input type="text" value={booking.end_date} disabled className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-chalk text-[#71717a] cursor-not-allowed" />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-[#1c1917] mb-1.5">New End Date</label>
+              <input type="date" value={newEndDate} onChange={e => setNewEndDate(e.target.value)}
+                min={booking.end_date}
+                className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-chalk text-[#1c1917] outline-none focus:border-[#1c1917] focus:bg-white transition-all" />
+            </div>
+          </div>
+        </div>
+        <div className="p-5 space-y-3">
+          {error && <AlertMessage type="error" message={error} />}
+          {summary ? (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
+              <p className="text-sm font-semibold text-emerald-700">Booking Extended!</p>
+              <p className="text-xs text-emerald-600 mt-1">New total: Rs {Number(summary.new_total).toLocaleString()}</p>
+              <p className="text-xs text-emerald-600">Additional amount: Rs {Number(summary.additional_amount).toLocaleString()}</p>
+              <button onClick={onClose} className="mt-3 text-xs font-semibold text-emerald-700 hover:underline">Close</button>
+            </div>
+          ) : (
+            <button onClick={handleExtend} disabled={loading}
+              className="w-full bg-[#1c1917] hover:bg-brick text-white font-display font-bold py-2.5 rounded-lg transition-colors text-sm">
+              {loading ? 'Extending...' : 'Confirm Extension'}
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -206,16 +257,23 @@ export default function MyBookings() {
   const [reviewBooking, setReviewBooking] = useState(null)
   const [reviewableIds, setReviewableIds] = useState(new Set())
   const [paymentBooking, setPaymentBooking] = useState(null)
+  const [extendBooking, setExtendBooking] = useState(null)
 
   const fetchBookings = useCallback(async () => {
     try {
       const res = await getMyBookings()
       const data = res.data.data.bookings || []
       setBookings(data)
+
+      const completedBookings = data.filter(b => b.status === 'completed')
       const checks = await Promise.all(
-        data.filter(b => b.status === 'completed').map(async b => {
-          try { const r = await checkCanReview(b.id); return r.data?.data?.can_review ? b.id : null }
-          catch { return null }
+        completedBookings.map(async b => {
+          try {
+            const r = await checkCanReview(b.id)
+            return r.data?.data?.can_review ? b.id : null
+          } catch {
+            return null
+          }
         })
       )
       setReviewableIds(new Set(checks.filter(Boolean)))
@@ -272,6 +330,9 @@ export default function MyBookings() {
       )}
       {paymentBooking && (
         <PaymentModal booking={paymentBooking} onSuccess={handlePaymentSuccess} onClose={() => setPaymentBooking(null)} />
+      )}
+      {extendBooking && (
+        <ExtendModal booking={extendBooking} onSuccess={() => { setExtendBooking(null); fetchBookings() }} onClose={() => setExtendBooking(null)} />
       )}
 
       {error && <AlertMessage type="error" message={error} onClose={() => setError('')} />}
@@ -365,12 +426,20 @@ export default function MyBookings() {
                         </button>
                       )}
                       {b.status === 'active' && (
-                        <button 
-                          onClick={() => handleCancel(b.id)}
-                          className="inline-flex items-center gap-1 text-xs text-brick hover:underline font-semibold transition-all hover:text-red-700"
-                        >
-                          <X size={11} /> Cancel
-                        </button>
+                        <>
+                          <button 
+                            onClick={() => setExtendBooking(b)}
+                            className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline font-semibold"
+                          >
+                            <Clock size={11} /> Extend
+                          </button>
+                          <button 
+                            onClick={() => handleCancel(b.id)}
+                            className="inline-flex items-center gap-1 text-xs text-brick hover:underline font-semibold transition-all hover:text-red-700"
+                          >
+                            <X size={11} /> Cancel
+                          </button>
+                        </>
                       )}
                       {canReview && (
                         <button 

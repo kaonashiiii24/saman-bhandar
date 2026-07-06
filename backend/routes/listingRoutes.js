@@ -4,13 +4,13 @@ const auth = require('../middleware/auth');
 const roleCheck = require('../middleware/roleCheck');
 const upload = require('../middleware/upload');
 
-router.get('/locations', getLocations);
 router.get('/', getListings);
+router.get('/locations', getLocations);
 router.get('/host/my', auth, roleCheck('host'), getMyListings);
 router.get('/:id/items', auth, roleCheck('host'), getListingItems);
 router.get('/:id', getListing);
 router.post('/', auth, roleCheck('host'), upload.single('image'), createListing);
-router.put('/:id', auth, updateListing);
+router.put('/:id', auth, upload.single('image'), updateListing);
 router.delete('/:id', auth, deleteListing);
 
 module.exports = router;

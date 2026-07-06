@@ -6,7 +6,7 @@ const getContacts = async (req, res) => {
     const contacts = await Message.findContacts(req.user.id);
     return success(res, { contacts });
   } catch (err) {
-    console.error('CONTACTS ERROR:', err.message);  // ADD THIS LINE
+    console.error('CONTACTS ERROR:', err.message); 
     return error(res, err.message);
   }
 };

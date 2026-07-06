@@ -38,9 +38,9 @@ export default function SellerDashboard() {
   useEffect(() => {
     Promise.all([getMyBookings(), getInventory(), getMyPayments()])
       .then(([b, i, p]) => {
-        setBookings(b.data.data.bookings || [])
-        setInventory(i.data.data.items || [])
-        setPayments(p.data.data.payments || [])
+        setBookings(b?.data?.data?.bookings || b?.data?.bookings || b || [])
+        setInventory(i?.data?.data?.items || i?.data?.items || i || [])
+        setPayments(p?.data?.data?.payments || p?.data?.payments || p || [])
       })
       .catch(() => {})
       .finally(() => setLoading(false))

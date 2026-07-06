@@ -76,6 +76,13 @@ const updateBookingStatus = async (req, res) => {
     const booking = await Booking.findById(req.params.id);
     if (!booking) return error(res, 'Booking not found', 404);
     
+    if (req.body.status === 'completed') {
+      const [items] = await pool.query('SELECT COUNT(*) as count FROM inventory WHERE booking_id = ?', [req.params.id]);
+      if (items[0].count > 0) {
+        return error(res, 'Cannot complete booking. There are still items stored in this space.', 400);
+      }
+    }
+    
     if (req.body.status === 'approved' || req.body.status === 'active') {
       const hasConflict = await Booking.checkDateConflict(
         booking.listing_id, 
@@ -122,4 +129,46 @@ const cancelBooking = async (req, res) => {
   } catch (err) { return error(res, err.message); }
 };
 
-module.exports = { getMyBookings, getHostBookings, getAllBookings, createBooking, updateBookingStatus, cancelBooking };
+const extendBooking = async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id);
+    if (!booking) return error(res, 'Booking not found', 404);
+    if (booking.seller_id !== req.user.id) return error(res, 'Unauthorized', 403);
+    if (booking.status !== 'active') return error(res, 'Only active bookings can be extended', 400);
+    
+    const { new_end_date } = req.body;
+    if (!new_end_date) return error(res, 'New end date is required', 400);
+    
+    const newEnd = new Date(new_end_date);
+    const currentEnd = new Date(booking.end_date);
+    
+    if (newEnd <= currentEnd) return error(res, 'New end date must be after current end date', 400);
+    
+    const hasConflict = await Booking.checkDateConflict(
+      booking.listing_id,
+      booking.start_date,
+      new_end_date,
+      booking.id
+    );
+    if (hasConflict) return error(res, 'This space is already booked for the extended period', 409);
+    
+    const listing = await Listing.findById(booking.listing_id);
+    const totalDays = Math.ceil((newEnd - new Date(booking.start_date)) / (1000 * 60 * 60 * 24));
+    const newTotalAmount = Math.ceil((listing.price_per_month / 30) * totalDays);
+    const additionalAmount = newTotalAmount - booking.total_amount;
+    const newCommissionAmount = Math.ceil(newTotalAmount * (COMMISSION_RATE / 100));
+    
+    await pool.query(
+      'UPDATE bookings SET end_date = ?, total_amount = ?, commission_amount = ? WHERE id = ?',
+      [new_end_date, newTotalAmount, newCommissionAmount, booking.id]
+    );
+    
+    return success(res, {
+      additional_amount: additionalAmount,
+      new_total: newTotalAmount,
+      new_end_date
+    }, 'Booking extended. Please pay the additional amount.');
+  } catch (err) { return error(res, err.message); }
+};
+
+module.exports = { getMyBookings, getHostBookings, getAllBookings, createBooking, updateBookingStatus, cancelBooking, extendBooking };

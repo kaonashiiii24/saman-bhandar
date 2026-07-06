@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Building2, MapPin, Eye, EyeOff, Trash2, X, Package, Upload } from 'lucide-react'
+import { Plus, Building2, MapPin, Eye, EyeOff, Trash2, X, Package, Upload, Pencil } from 'lucide-react'
 import { getMyListings, createListing, updateListing, deleteListing } from '../../services/listingService'
 import Loader from '../../components/common/Loader'
 import AlertMessage from '../../components/common/AlertMessage'
@@ -14,6 +14,11 @@ export default function MyListings() {
   const [image, setImage] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
   const [submitting, setSubmitting] = useState(false)
+  const [editModal, setEditModal] = useState(null)
+  const [editForm, setEditForm] = useState({ title: '', location: '', size: '', price_per_month: '', description: '' })
+  const [editImage, setEditImage] = useState(null)
+  const [editImagePreview, setEditImagePreview] = useState(null)
+  const [editSubmitting, setEditSubmitting] = useState(false)
 
   useEffect(() => { fetchListings() }, [])
 
@@ -44,10 +49,8 @@ export default function MyListings() {
       setError('Title, location and price are required')
       return
     }
-    
     setSubmitting(true)
     setError('')
-    
     try {
       const formData = new FormData()
       formData.append('title', form.title)
@@ -55,10 +58,7 @@ export default function MyListings() {
       formData.append('size', form.size)
       formData.append('price_per_month', form.price_per_month)
       formData.append('description', form.description)
-      if (image) {
-        formData.append('image', image)
-      }
-      
+      if (image) formData.append('image', image)
       await createListing(formData)
       setSuccess('Listing created successfully!')
       setForm({ title: '', location: '', size: '', price_per_month: '', description: '' })
@@ -74,6 +74,60 @@ export default function MyListings() {
     }
   }
 
+  const openEditModal = (listing) => {
+    setEditModal(listing)
+    setEditForm({
+      title: listing.title || '',
+      location: listing.location || '',
+      size: listing.size || '',
+      price_per_month: listing.price_per_month || '',
+      description: listing.description || ''
+    })
+    setEditImage(null)
+    setEditImagePreview(null)
+  }
+
+  const handleEditImageChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Image size must be less than 5MB')
+        return
+      }
+      setEditImage(file)
+      const reader = new FileReader()
+      reader.onloadend = () => setEditImagePreview(reader.result)
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleEditSave = async () => {
+    if (!editForm.title || !editForm.location || !editForm.price_per_month) {
+      setError('Title, location and price are required')
+      return
+    }
+    setEditSubmitting(true)
+    setError('')
+    try {
+      const formData = new FormData()
+      formData.append('title', editForm.title)
+      formData.append('location', editForm.location)
+      formData.append('size', editForm.size)
+      formData.append('price_per_month', editForm.price_per_month)
+      formData.append('description', editForm.description)
+      if (editImage) formData.append('image', editImage)
+      await updateListing(editModal.id, formData)
+      setSuccess('Listing updated successfully!')
+      setEditModal(null)
+      fetchListings()
+      setTimeout(() => setSuccess(''), 3000)
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to update listing')
+    } finally {
+      setEditSubmitting(false)
+    }
+  }
+
   const handleToggle = async (id) => {
     const l = listings.find(l => l.id === id)
     try {
@@ -83,18 +137,17 @@ export default function MyListings() {
   }
 
   const handleDelete = async (id) => {
-  if (!window.confirm('Are you sure you want to delete this listing? This cannot be undone.')) return
-  
-  try {
-    await deleteListing(id)
-    setListings(listings.filter(l => l.id !== id))
-    setSuccess('Listing deleted')
-    setTimeout(() => setSuccess(''), 3000)
-  } catch (err) {
-    const msg = err.response?.data?.message || 'Failed to delete listing'
-    setError(msg)
+    if (!window.confirm('Are you sure you want to delete this listing? This cannot be undone.')) return
+    try {
+      await deleteListing(id)
+      setListings(listings.filter(l => l.id !== id))
+      setSuccess('Listing deleted')
+      setTimeout(() => setSuccess(''), 3000)
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to delete listing')
+    }
   }
-}
+
   if (loading) return <Loader />
 
   return (
@@ -141,8 +194,7 @@ export default function MyListings() {
                   <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
                 </label>
                 {imagePreview && (
-                  <button onClick={() => { setImage(null); setImagePreview(null) }}
-                    className="text-xs text-brick hover:underline">Remove</button>
+                  <button onClick={() => { setImage(null); setImagePreview(null) }} className="text-xs text-brick hover:underline">Remove</button>
                 )}
               </div>
               {imagePreview && (
@@ -174,7 +226,7 @@ export default function MyListings() {
             style={{ animationDelay: `${i * 50}ms`, animationFillMode: 'both' }}>
             <div className="h-32 bg-chalk border-b border-border flex items-center justify-center relative overflow-hidden">
               {l.image_url ? (
-               <img src={l.image_url} alt={l.title} className="w-full h-full object-cover" />
+                <img src={l.image_url} alt={l.title} className="w-full h-full object-cover" />
               ) : (
                 <Package size={32} className="text-border" />
               )}
@@ -198,6 +250,10 @@ export default function MyListings() {
                   {l.is_active ? <EyeOff size={12} /> : <Eye size={12} />}
                   {l.is_active ? 'Deactivate' : 'Activate'}
                 </button>
+                <button onClick={() => openEditModal(l)}
+                  className="p-1.5 text-[#71717a] hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                  <Pencil size={14} />
+                </button>
                 <button onClick={() => handleDelete(l.id)}
                   className="p-1.5 text-[#71717a] hover:text-brick hover:bg-brick-light rounded-lg transition-colors">
                   <Trash2 size={14} />
@@ -207,6 +263,84 @@ export default function MyListings() {
           </div>
         ))}
       </div>
+
+      {editModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in" onClick={() => setEditModal(null)}>
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl animate-scale-in overflow-y-auto max-h-[90vh]" onClick={e => e.stopPropagation()}>
+            <div className="p-5 border-b border-border flex items-center justify-between">
+              <h3 className="font-display font-bold text-[#1c1917] text-sm">Edit Listing</h3>
+              <button onClick={() => setEditModal(null)} className="p-1.5 rounded-lg hover:bg-chalk transition-colors">
+                <X size={16} className="text-[#71717a]" />
+              </button>
+            </div>
+            <div className="p-5 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-[#1c1917] mb-1.5">Title</label>
+                  <input type="text" value={editForm.title} onChange={e => setEditForm({ ...editForm, title: e.target.value })}
+                    className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-chalk text-[#1c1917] outline-none focus:border-[#1c1917] focus:bg-white transition-all" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-[#1c1917] mb-1.5">Location</label>
+                  <input type="text" value={editForm.location} onChange={e => setEditForm({ ...editForm, location: e.target.value })}
+                    className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-chalk text-[#1c1917] outline-none focus:border-[#1c1917] focus:bg-white transition-all" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-[#1c1917] mb-1.5">Size</label>
+                  <input type="text" value={editForm.size} onChange={e => setEditForm({ ...editForm, size: e.target.value })}
+                    className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-chalk text-[#1c1917] outline-none focus:border-[#1c1917] focus:bg-white transition-all" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-[#1c1917] mb-1.5">Price/Month (Rs)</label>
+                  <input type="number" value={editForm.price_per_month} onChange={e => setEditForm({ ...editForm, price_per_month: e.target.value })}
+                    className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-chalk text-[#1c1917] outline-none focus:border-[#1c1917] focus:bg-white transition-all" />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-bold text-[#1c1917] mb-1.5">Description</label>
+                  <textarea rows={2} value={editForm.description} onChange={e => setEditForm({ ...editForm, description: e.target.value })}
+                    className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-chalk text-[#1c1917] outline-none focus:border-[#1c1917] focus:bg-white transition-all resize-none" />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-bold text-[#1c1917] mb-1.5">Listing Image</label>
+                  <div className="flex items-center gap-3">
+                    <label className="flex items-center gap-2 px-4 py-2.5 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-[#1c1917] transition-colors">
+                      <Upload size={14} className="text-[#71717a]" />
+                      <span className="text-xs text-[#71717a]">{editImage ? editImage.name : 'Change image'}</span>
+                      <input type="file" accept="image/*" onChange={handleEditImageChange} className="hidden" />
+                    </label>
+                    {editImagePreview && (
+                      <button
+                        type="button"
+                        onClick={() => { setEditImage(null); setEditImagePreview(null) }}
+                        className="inline-flex items-center gap-1 text-xs font-medium text-brick hover:text-red-700 bg-brick-light hover:bg-red-100 px-2.5 py-1 rounded-lg transition-colors"
+                      >
+                        <Trash2 size={12} /> Remove
+                      </button>
+                    )}
+                  </div>
+                  <div className="mt-2 h-32 bg-chalk rounded-lg overflow-hidden border border-border">
+                    <img 
+                      src={editImagePreview || editModal.image_url || ''} 
+                      alt="Preview" 
+                      className="w-full h-full object-cover" 
+                      onError={(e) => { e.target.style.display = 'none' }} 
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button onClick={() => setEditModal(null)} className="flex-1 py-2.5 border border-border rounded-lg text-sm font-semibold text-[#71717a] hover:bg-chalk transition-colors">
+                  Cancel
+                </button>
+                <button onClick={handleEditSave} disabled={editSubmitting}
+                  className="flex-1 py-2.5 bg-[#1c1917] hover:bg-brick text-white rounded-lg text-sm font-display font-bold transition-colors disabled:opacity-60">
+                  {editSubmitting ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

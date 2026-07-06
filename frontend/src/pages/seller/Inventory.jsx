@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Package, Plus, Search, Trash2, AlertTriangle, X, Truck, ArrowDown, ArrowUp } from 'lucide-react'
-import { getInventory, createItem, deleteItem, createDeliveryRequest } from '../../services/inventoryService'
+import { Package, Search, Trash2, AlertTriangle, X, Truck, ArrowDown, ArrowUp, Lock } from 'lucide-react'
+import { getInventory, deleteItem, createDeliveryRequest } from '../../services/inventoryService'
 import { getMyBookings } from '../../services/bookingService'
 import Loader from '../../components/common/Loader'
 import AlertMessage from '../../components/common/AlertMessage'
@@ -12,10 +12,8 @@ export default function Inventory() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [search, setSearch] = useState('')
-  const [showForm, setShowForm] = useState(false)
   const [showDeliveryForm, setShowDeliveryForm] = useState(false)
   const [deliveryType, setDeliveryType] = useState('pickup')
-  const [form, setForm] = useState({ name: '', category: '', quantity: '', booking_id: '' })
   const [deliveryForm, setDeliveryForm] = useState({
     booking_id: '',
     pickup_location: '',
@@ -37,24 +35,6 @@ export default function Inventory() {
     finally { setLoading(false) }
   }
 
-  const handleAdd = async () => {
-    if (!form.name) return
-    try {
-      await createItem({ 
-        name: form.name,
-        category: form.category,
-        quantity: parseInt(form.quantity) || 0,
-        booking_id: form.booking_id || null,
-        location: form.booking_id ? bookings.find(b => b.id == form.booking_id)?.listing_title : form.location
-      })
-      setSuccess('Item added')
-      setForm({ name: '', category: '', quantity: '', booking_id: '' })
-      setShowForm(false)
-      fetchData()
-      setTimeout(() => setSuccess(''), 3000)
-    } catch { setError('Failed to add item') }
-  }
-
   const handleDelete = async (id) => {
     try {
       await deleteItem(id)
@@ -71,7 +51,7 @@ export default function Inventory() {
       setError('Select at least one item')
       return
     }
-    
+
     setSubmitting(true)
     try {
       const itemsPayload = deliveryForm.selectedItems.map(i => ({
@@ -125,7 +105,10 @@ export default function Inventory() {
 
   const getBookingTitle = (bookingId) => {
     const booking = bookings.find(b => b.id == bookingId)
-    return booking ? booking.listing_title : '—'
+    if (!booking) return '—'
+    return booking.listing_location
+      ? `${booking.listing_title} · ${booking.listing_location}`
+      : booking.listing_title
   }
 
   const getBookingItems = (bookingId) => {
@@ -151,13 +134,9 @@ export default function Inventory() {
             className="w-full pl-9 pr-4 py-2.5 text-sm border border-border rounded-lg bg-white text-[#1c1917] placeholder-[#71717a] outline-none focus:border-[#1c1917] focus:ring-2 focus:ring-[#1c1917]/6 transition-all" />
         </div>
         <div className="flex gap-2">
-          <button onClick={() => { setShowDeliveryForm(!showDeliveryForm); setShowForm(false) }}
+          <button onClick={() => setShowDeliveryForm(!showDeliveryForm)}
             className="inline-flex items-center justify-center gap-2 bg-brick hover:bg-brick-dark text-white font-display font-bold px-4 py-2.5 rounded-lg transition-colors text-sm shrink-0">
             {showDeliveryForm ? <><X size={15} /> Cancel</> : <><Truck size={15} /> Request Delivery</>}
-          </button>
-          <button onClick={() => { setShowForm(!showForm); setShowDeliveryForm(false) }}
-            className="inline-flex items-center justify-center gap-2 bg-[#1c1917] hover:bg-brick text-white font-display font-bold px-4 py-2.5 rounded-lg transition-colors text-sm shrink-0">
-            {showForm ? <><X size={15} /> Cancel</> : <><Plus size={15} /> Add Item</>}
           </button>
         </div>
       </div>
@@ -167,16 +146,14 @@ export default function Inventory() {
           <h3 className="font-display font-bold text-[#1c1917] mb-4 text-sm">New Delivery Request</h3>
 
           <div className="flex gap-2 mb-4">
-            <button type="button" onClick={() => { setDeliveryType('pickup'); setDeliveryForm({ ...deliveryForm, selectedItems: [] }) }}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-                deliveryType === 'pickup' ? 'bg-[#1c1917] text-white shadow-md' : 'bg-chalk border border-border text-[#71717a] hover:border-[#1c1917]'
-              }`}>
+            <button type="button"
+              onClick={() => { setDeliveryType('pickup'); setDeliveryForm(prev => ({ ...prev, selectedItems: [], pickup_location: '' })) }}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all ${deliveryType === 'pickup' ? 'bg-[#1c1917] text-white shadow-md' : 'bg-chalk border border-border text-[#71717a] hover:border-[#1c1917]'}`}>
               <ArrowUp size={15} /> Pickup from Storage
             </button>
-            <button type="button" onClick={() => { setDeliveryType('dropoff'); setDeliveryForm({ ...deliveryForm, selectedItems: [] }) }}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-                deliveryType === 'dropoff' ? 'bg-[#1c1917] text-white shadow-md' : 'bg-chalk border border-border text-[#71717a] hover:border-[#1c1917]'
-              }`}>
+            <button type="button"
+              onClick={() => { setDeliveryType('dropoff'); setDeliveryForm(prev => ({ ...prev, selectedItems: [], delivery_location: '' })) }}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all ${deliveryType === 'dropoff' ? 'bg-[#1c1917] text-white shadow-md' : 'bg-chalk border border-border text-[#71717a] hover:border-[#1c1917]'}`}>
               <ArrowDown size={15} /> Dropoff to Storage
             </button>
           </div>
@@ -184,7 +161,16 @@ export default function Inventory() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
             <div className="sm:col-span-2">
               <label className="block text-xs font-bold text-[#1c1917] mb-1.5">Storage Space</label>
-              <select value={deliveryForm.booking_id} onChange={e => setDeliveryForm({ ...deliveryForm, booking_id: e.target.value, selectedItems: [] })}
+              <select value={deliveryForm.booking_id} onChange={e => {
+                const booking = bookings.find(b => b.id == e.target.value)
+                setDeliveryForm(prev => ({
+                  ...prev,
+                  booking_id: e.target.value,
+                  selectedItems: [],
+                  ...(deliveryType === 'pickup' && booking ? { pickup_location: booking.listing_location || '' } : {}),
+                  ...(deliveryType === 'dropoff' && booking ? { delivery_location: booking.listing_location || '' } : {})
+                }))
+              }}
                 className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-chalk text-[#1c1917] outline-none focus:border-[#1c1917] focus:bg-white transition-all">
                 <option value="">Select a space</option>
                 {bookings.filter(b => b.status === 'active' || b.status === 'approved').map(b => (
@@ -192,47 +178,43 @@ export default function Inventory() {
                 ))}
               </select>
             </div>
+
             <div>
-              <label className="block text-xs font-bold text-[#1c1917] mb-1.5">
-                {deliveryType === 'pickup' ? 'Pickup Location' : 'Supplier/Your Address'}
+              <label className="block text-xs font-bold text-[#1c1917] mb-1.5 flex items-center gap-1">
+                {deliveryType === 'pickup' ? <><Lock size={10} className="text-[#71717a]" /> Pickup from Storage</> : 'Supplier / Your Address'}
               </label>
-              <input type="text" placeholder={deliveryType === 'pickup' ? "e.g. Lakeside, Pokhara" : "e.g. Supplier warehouse, Newroad"}
+              <input type="text" placeholder={deliveryType === 'pickup' ? 'Select a storage space above' : 'e.g. Supplier warehouse, Newroad'}
                 value={deliveryForm.pickup_location}
                 onChange={e => setDeliveryForm({ ...deliveryForm, pickup_location: e.target.value })}
-                className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-chalk text-[#1c1917] placeholder-[#71717a] outline-none focus:border-[#1c1917] focus:bg-white transition-all" />
+                disabled={deliveryType === 'pickup'}
+                className={`w-full px-3 py-2.5 text-sm border border-border rounded-lg outline-none transition-all ${deliveryType === 'pickup' ? 'bg-gray-100 text-[#1c1917] cursor-not-allowed' : 'bg-chalk text-[#1c1917] placeholder-[#71717a] focus:border-[#1c1917] focus:bg-white'}`} />
             </div>
+
             <div>
-              <label className="block text-xs font-bold text-[#1c1917] mb-1.5">
-                {deliveryType === 'pickup' ? 'Delivery Location' : 'Storage Address'}
+              <label className="block text-xs font-bold text-[#1c1917] mb-1.5 flex items-center gap-1">
+                {deliveryType === 'dropoff' ? <><Lock size={10} className="text-[#71717a]" /> Delivery to Storage</> : 'Delivery Location'}
               </label>
-              <div className="flex items-center gap-2">
-                <input type="text" placeholder={deliveryType === 'pickup' ? "e.g. New Baneshwor" : "Storage address (auto-filled)"}
-                  value={deliveryForm.delivery_location}
-                  onChange={e => setDeliveryForm({ ...deliveryForm, delivery_location: e.target.value })}
-                  className="flex-1 px-3 py-2.5 text-sm border border-border rounded-lg bg-chalk text-[#1c1917] placeholder-[#71717a] outline-none focus:border-[#1c1917] focus:bg-white transition-all" />
-                {deliveryType === 'dropoff' && deliveryForm.booking_id && (
-                  <button type="button"
-                    onClick={() => {
-                      const booking = bookings.find(b => b.id == deliveryForm.booking_id);
-                      if (booking) setDeliveryForm({ ...deliveryForm, delivery_location: booking.listing_location || '' });
-                    }}
-                    className="text-xs text-brick font-semibold hover:underline whitespace-nowrap">Use storage</button>
-                )}
-              </div>
+              <input type="text" placeholder={deliveryType === 'dropoff' ? 'Select a storage space above' : 'e.g. New Baneshwor'}
+                value={deliveryForm.delivery_location}
+                onChange={e => setDeliveryForm({ ...deliveryForm, delivery_location: e.target.value })}
+                disabled={deliveryType === 'dropoff'}
+                className={`w-full px-3 py-2.5 text-sm border border-border rounded-lg outline-none transition-all ${deliveryType === 'dropoff' ? 'bg-gray-100 text-[#1c1917] cursor-not-allowed' : 'bg-chalk text-[#1c1917] placeholder-[#71717a] focus:border-[#1c1917] focus:bg-white'}`} />
             </div>
+
             <div className="sm:col-span-2">
               <label className="block text-xs font-bold text-[#1c1917] mb-1.5">Instructions (Optional)</label>
               <textarea rows={2} placeholder="Any special instructions..." value={deliveryForm.instructions}
                 onChange={e => setDeliveryForm({ ...deliveryForm, instructions: e.target.value })}
                 className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-chalk text-[#1c1917] placeholder-[#71717a] outline-none focus:border-[#1c1917] focus:bg-white transition-all resize-none" />
             </div>
+
             <div>
               <label className="block text-xs font-bold text-[#1c1917] mb-1.5">Delivery Fee (Rs)</label>
-              <input type="number" min="0" placeholder="e.g. 500"
-                value={deliveryForm.delivery_fee || ''}
+              <input type="number" min="0" placeholder="e.g. 500" value={deliveryForm.delivery_fee || ''}
                 onChange={e => setDeliveryForm({ ...deliveryForm, delivery_fee: e.target.value })}
                 className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-chalk text-[#1c1917] placeholder-[#71717a] outline-none focus:border-[#1c1917] focus:bg-white transition-all" />
             </div>
+
             {deliveryForm.booking_id && (
               <div className="sm:col-span-2">
                 <label className="block text-xs font-bold text-[#1c1917] mb-1.5">
@@ -241,14 +223,13 @@ export default function Inventory() {
                 {deliveryType === 'pickup' ? (
                   <div className="space-y-2 max-h-48 overflow-y-auto">
                     {getBookingItems(deliveryForm.booking_id).length === 0 ? (
-                      <p className="text-xs text-[#71717a]">No items in this space. Add items first.</p>
+                      <p className="text-xs text-[#71717a]">No items in this space. Add items via Dropoff to Storage.</p>
                     ) : (
                       getBookingItems(deliveryForm.booking_id).map(item => {
                         const selected = deliveryForm.selectedItems.find(i => i.id === item.id)
                         return (
-                          <div key={item.id} className={`flex items-center gap-3 p-2.5 rounded-lg border cursor-pointer transition-all ${
-                            selected ? 'border-[#1c1917] bg-chalk' : 'border-border hover:border-[#1c1917]'
-                          }`} onClick={() => toggleItemSelection(item)}>
+                          <div key={item.id} className={`flex items-center gap-3 p-2.5 rounded-lg border cursor-pointer transition-all ${selected ? 'border-[#1c1917] bg-chalk' : 'border-border hover:border-[#1c1917]'}`}
+                            onClick={() => toggleItemSelection(item)}>
                             <input type="checkbox" checked={!!selected} readOnly className="w-4 h-4 accent-[#1c1917]" />
                             <div className="flex-1">
                               <p className="text-sm font-semibold text-[#1c1917]">{item.name}</p>
@@ -272,37 +253,23 @@ export default function Inventory() {
                           <div key={idx} className="flex items-center gap-2 p-2.5 bg-chalk rounded-lg border border-border">
                             <div className="flex-1 flex gap-2">
                               <input type="text" placeholder="Item name" value={item.name}
-                                onChange={e => {
-                                  const updated = [...deliveryForm.selectedItems];
-                                  updated[idx].name = e.target.value;
-                                  setDeliveryForm(prev => ({ ...prev, selectedItems: updated }));
-                                }} className="flex-1 px-2 py-1.5 text-xs border border-border rounded bg-white" />
+                                onChange={e => { const updated = [...deliveryForm.selectedItems]; updated[idx].name = e.target.value; setDeliveryForm(prev => ({ ...prev, selectedItems: updated })); }}
+                                className="flex-1 px-2 py-1.5 text-xs border border-border rounded bg-white" />
                               <input type="text" placeholder="Category" value={item.category}
-                                onChange={e => {
-                                  const updated = [...deliveryForm.selectedItems];
-                                  updated[idx].category = e.target.value;
-                                  setDeliveryForm(prev => ({ ...prev, selectedItems: updated }));
-                                }} className="w-24 px-2 py-1.5 text-xs border border-border rounded bg-white" />
+                                onChange={e => { const updated = [...deliveryForm.selectedItems]; updated[idx].category = e.target.value; setDeliveryForm(prev => ({ ...prev, selectedItems: updated })); }}
+                                className="w-24 px-2 py-1.5 text-xs border border-border rounded bg-white" />
                               <input type="number" min="1" placeholder="Qty" value={item.quantity}
-                                onChange={e => {
-                                  const updated = [...deliveryForm.selectedItems];
-                                  updated[idx].quantity = parseInt(e.target.value) || 0;
-                                  setDeliveryForm(prev => ({ ...prev, selectedItems: updated }));
-                                }} className="w-16 px-2 py-1.5 text-xs border border-border rounded bg-white text-center" />
+                                onChange={e => { const updated = [...deliveryForm.selectedItems]; updated[idx].quantity = parseInt(e.target.value) || 0; setDeliveryForm(prev => ({ ...prev, selectedItems: updated })); }}
+                                className="w-16 px-2 py-1.5 text-xs border border-border rounded bg-white text-center" />
                             </div>
-                            <button onClick={() => {
-                              const updated = deliveryForm.selectedItems.filter((_, i) => i !== idx);
-                              setDeliveryForm(prev => ({ ...prev, selectedItems: updated }));
-                            }} className="p-1 text-[#71717a] hover:text-brick"><X size={14} /></button>
+                            <button onClick={() => { const updated = deliveryForm.selectedItems.filter((_, i) => i !== idx); setDeliveryForm(prev => ({ ...prev, selectedItems: updated })); }}
+                              className="p-1 text-[#71717a] hover:text-brick"><X size={14} /></button>
                           </div>
                         ))}
                       </div>
                     )}
                     <button type="button" onClick={() => {
-                      setDeliveryForm(prev => ({
-                        ...prev,
-                        selectedItems: [...prev.selectedItems, { id: Date.now(), name: '', category: '', quantity: 1 }]
-                      }));
+                      setDeliveryForm(prev => ({ ...prev, selectedItems: [...prev.selectedItems, { id: Date.now(), name: '', category: '', quantity: 1 }] }));
                     }} className="w-full py-2 border-2 border-dashed border-border rounded-lg text-xs text-[#71717a] hover:border-[#1c1917] hover:text-[#1c1917] transition-colors font-semibold">
                       + Add Item
                     </button>
@@ -318,45 +285,6 @@ export default function Inventory() {
         </div>
       )}
 
-      {showForm && (
-        <div className="bg-white border border-border rounded-xl p-4 sm:p-5 animate-fade-in-up">
-          <h3 className="font-display font-bold text-[#1c1917] mb-4 text-sm">New Inventory Item</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-            {[
-              { key: 'name', label: 'Item Name', placeholder: 'e.g. Winter Jackets' },
-              { key: 'category', label: 'Category', placeholder: 'e.g. Clothing' },
-              { key: 'quantity', label: 'Quantity', placeholder: 'e.g. 50', type: 'number' },
-            ].map(f => (
-              <div key={f.key}>
-                <label className="block text-xs font-bold text-[#1c1917] mb-1.5">{f.label}</label>
-                <input type={f.type || 'text'} placeholder={f.placeholder} value={form[f.key]}
-                  onChange={e => setForm({ ...form, [f.key]: e.target.value })}
-                  className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-chalk text-[#1c1917] placeholder-[#71717a] outline-none focus:border-[#1c1917] focus:bg-white transition-all" />
-              </div>
-            ))}
-            <div className="sm:col-span-2">
-              <label className="block text-xs font-bold text-[#1c1917] mb-1.5">Storage Space (Optional)</label>
-              {bookings.filter(b => b.status === 'active' || b.status === 'approved').length > 0 ? (
-                <select value={form.booking_id} onChange={e => setForm({ ...form, booking_id: e.target.value })}
-                  className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-chalk text-[#1c1917] outline-none focus:border-[#1c1917] focus:bg-white transition-all">
-                  <option value="">No space selected</option>
-                  {bookings.filter(b => b.status === 'active' || b.status === 'approved').map(b => (
-                    <option key={b.id} value={b.id}>{b.listing_title} — {b.listing_location}</option>
-                  ))}
-                </select>
-              ) : (
-                <div className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-chalk text-[#71717a]">
-                  No approved bookings yet. <a href="/listings" className="text-brick hover:underline">Find a space</a>
-                </div>
-              )}
-            </div>
-          </div>
-          <button onClick={handleAdd} className="bg-[#1c1917] hover:bg-brick text-white font-display font-bold px-5 py-2.5 rounded-lg text-sm transition-colors">
-            Add Item
-          </button>
-        </div>
-      )}
-
       <div className="bg-white border border-border rounded-xl overflow-hidden">
         <div className="px-4 sm:px-5 py-4 border-b border-border flex items-center justify-between">
           <h3 className="font-display font-bold text-[#1c1917] text-sm">All Items ({filtered.length})</h3>
@@ -365,7 +293,7 @@ export default function Inventory() {
           <div className="p-10 sm:p-14 text-center">
             <Package size={32} className="text-border mx-auto mb-3" />
             <p className="font-display font-bold text-[#1c1917] text-sm mb-1">No items yet</p>
-            <p className="text-[#71717a] text-xs">Add your first inventory item</p>
+            <p className="text-[#71717a] text-xs">Create a Dropoff to Storage delivery to add items.</p>
           </div>
         ) : (
           <>
@@ -380,8 +308,7 @@ export default function Inventory() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {filtered.map((item, i) => (
-                    <tr key={item.id} className="hover:bg-chalk transition-colors animate-fade-in-up"
-                      style={{ animationDelay: `${i * 40}ms`, animationFillMode: 'both' }}>
+                    <tr key={item.id} className="hover:bg-chalk transition-colors animate-fade-in-up" style={{ animationDelay: `${i * 40}ms`, animationFillMode: 'both' }}>
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">
                           <div className="w-7 h-7 rounded-lg bg-chalk flex items-center justify-center">
@@ -397,17 +324,14 @@ export default function Inventory() {
                           <span className="text-sm font-bold text-[#1c1917]">{item.quantity}</span>
                         </div>
                       </td>
-                      <td className="px-5 py-3.5 text-sm text-[#71717a]">
-                        {item.booking_id ? getBookingTitle(item.booking_id) : (item.location || '—')}
-                      </td>
+                      <td className="px-5 py-3.5 text-sm text-[#71717a]">{item.booking_id ? getBookingTitle(item.booking_id) : (item.location || '—')}</td>
                       <td className="px-5 py-3.5">
                         <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${item.quantity <= 5 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
                           {item.quantity <= 5 ? 'Low' : 'In Stock'}
                         </span>
                       </td>
                       <td className="px-5 py-3.5">
-                        <button onClick={() => handleDelete(item.id)}
-                          className="p-1.5 text-[#71717a] hover:text-brick hover:bg-brick-light rounded-lg transition-colors">
+                        <button onClick={() => handleDelete(item.id)} className="p-1.5 text-[#71717a] hover:text-brick hover:bg-brick-light rounded-lg transition-colors">
                           <Trash2 size={14} />
                         </button>
                       </td>
@@ -418,23 +342,17 @@ export default function Inventory() {
             </div>
             <div className="sm:hidden divide-y divide-border">
               {filtered.map((item, i) => (
-                <div key={item.id} className="flex items-center gap-3 px-4 py-3.5 hover:bg-chalk transition-colors animate-fade-in-up"
-                  style={{ animationDelay: `${i * 40}ms`, animationFillMode: 'both' }}>
+                <div key={item.id} className="flex items-center gap-3 px-4 py-3.5 hover:bg-chalk transition-colors animate-fade-in-up" style={{ animationDelay: `${i * 40}ms`, animationFillMode: 'both' }}>
                   <div className="w-8 h-8 rounded-lg bg-chalk flex items-center justify-center shrink-0">
                     <Package size={14} className="text-[#1c1917]" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-[#1c1917] truncate">{item.name}</p>
-                    <p className="text-xs text-[#71717a] mt-0.5">
-                      {item.category || '—'} · Qty: {item.quantity} · {item.booking_id ? getBookingTitle(item.booking_id) : (item.location || '—')}
-                    </p>
+                    <p className="text-xs text-[#71717a] mt-0.5">{item.category || '—'} · Qty: {item.quantity} · {item.booking_id ? getBookingTitle(item.booking_id) : (item.location || '—')}</p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${item.quantity <= 5 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                      {item.quantity <= 5 ? 'Low' : 'OK'}
-                    </span>
-                    <button onClick={() => handleDelete(item.id)}
-                      className="p-1.5 text-[#71717a] hover:text-brick transition-colors">
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${item.quantity <= 5 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>{item.quantity <= 5 ? 'Low' : 'OK'}</span>
+                    <button onClick={() => handleDelete(item.id)} className="p-1.5 text-[#71717a] hover:text-brick transition-colors">
                       <Trash2 size={13} />
                     </button>
                   </div>

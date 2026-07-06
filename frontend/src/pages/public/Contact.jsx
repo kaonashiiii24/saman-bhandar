@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { Mail, Phone, MapPin, Clock, Send, CheckCircle2 } from 'lucide-react'
+import { Mail, Phone, MapPin, Clock, Send, CheckCircle2, ArrowRight } from 'lucide-react'
 import CTABanner from '../../components/common/CTABanner'
 
 function useInView(threshold = 0.12) {
@@ -38,6 +38,7 @@ export default function Contact() {
   const [sent, setSent] = useState(false)
   const [loading, setLoading] = useState(false)
   const [scrollY, setScrollY] = useState(0)
+  const contactFormRef = useRef(null)
 
   useEffect(() => { setTimeout(() => setHeroVisible(true), 80) }, [])
 
@@ -54,6 +55,10 @@ export default function Contact() {
     setTimeout(() => { setLoading(false); setSent(true); setForm({ name: '', email: '', subject: '', message: '' }) }, 1500)
   }
 
+  const scrollToForm = () => {
+    contactFormRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
+
   const info = [
     { icon: Mail, label: 'Email', value: 'hello@samanbhandar.com', sub: 'Reply within 24 hours' },
     { icon: Phone, label: 'Phone', value: '+977 01-XXXXXXX', sub: 'Mon–Fri, 9am–6pm' },
@@ -64,39 +69,47 @@ export default function Contact() {
   return (
     <div className="bg-[#FAFAF9] overflow-x-hidden">
 
-      <section className="relative min-h-[70vh] sm:min-h-[80vh] flex items-center overflow-hidden">
-  <div 
-    className="absolute inset-0 bg-cover bg-center bg-no-repeat will-change-transform"
-    style={{ 
-      backgroundImage: "url('/images/contact-hero.jpg')",
-      transform: `translateY(${scrollY * 0.15}px)`
-    }}
-  />
-  <div className="absolute inset-0 bg-gradient-to-r from-[#1c1917]/90 via-[#1c1917]/70 to-[#1c1917]/50" />
-  <div className="absolute inset-0 bg-gradient-to-t from-[#1c1917]/40 via-transparent to-transparent" />
-  
-  <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 w-full relative z-10">
-    <div className="max-w-2xl">
-      <div className={`inline-flex items-center gap-2 border border-white/20 bg-white/5 backdrop-blur-sm px-4 py-2 rounded-full text-xs font-semibold text-white/80 mb-6 transition-all duration-700 delay-100 ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
-        <span className="relative flex h-2 w-2">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brick opacity-75" />
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-brick" />
-        </span>
-        Get in touch
-      </div>
-      <h1 className={`font-display font-black text-5xl sm:text-6xl lg:text-7xl text-white tracking-tight leading-[1.08] mb-5 transition-all duration-700 delay-300 ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
-        We'd love to<br />hear from you.
-      </h1>
-      <p className={`text-white/50 text-lg leading-relaxed mb-8 max-w-xl transition-all duration-700 delay-500 ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
-        Have a question, feedback or want to partner with us? We typically respond within one business day.
-      </p>
-    </div>
-  </div>
-</section>
+      <section className="relative min-h-screen flex items-center overflow-hidden">
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat will-change-transform"
+          style={{ 
+            backgroundImage: "url('/images/contact-hero.jpg')",
+            transform: `translateY(${scrollY * 0.15}px)`
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#1c1917]/90 via-[#1c1917]/70 to-[#1c1917]/50" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#1c1917]/40 via-transparent to-transparent" />
+        
+        <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 w-full relative z-10">
+          <div className="max-w-2xl">
+            <div className={`inline-flex items-center gap-2 border border-white/20 bg-white/5 backdrop-blur-sm px-4 py-2 rounded-full text-xs font-semibold text-white/80 mb-6 transition-all duration-700 delay-100 ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brick opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-brick" />
+              </span>
+              Get in touch
+            </div>
+            <h1 className={`font-display font-black text-5xl sm:text-6xl lg:text-7xl text-white tracking-tight leading-[1.08] mb-5 transition-all duration-700 delay-300 ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
+              We'd love to<br />hear from you.
+            </h1>
+            <p className={`text-white/50 text-lg leading-relaxed mb-8 max-w-xl transition-all duration-700 delay-500 ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
+              Have a question, feedback or want to partner with us? We typically respond within one business day.
+            </p>
+            <div className={`flex flex-wrap gap-3 transition-all duration-700 delay-700 ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
+              <button
+                onClick={scrollToForm}
+                className="inline-flex items-center gap-2 bg-white hover:bg-neutral-100 text-neutral-900 font-display font-bold px-6 py-3.5 rounded-xl transition-all shadow-xl hover:shadow-2xl hover:-translate-y-0.5 active:translate-y-0 text-sm"
+              >
+                Contact Now <ArrowRight size={16} />
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <section className="py-8 bg-white border-b border-border">
         <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
             {info.map((item, i) => (
               <Reveal key={i} delay={i * 80} direction="up">
                 <div className="flex items-start gap-3 group cursor-default">
@@ -115,7 +128,7 @@ export default function Contact() {
         </div>
       </section>
 
-      <section className="py-20 bg-[#FAFAF9]">
+      <section ref={contactFormRef} className="py-20 bg-[#FAFAF9]">
         <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12 items-start">
             <Reveal direction="left">

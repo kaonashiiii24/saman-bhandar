@@ -63,13 +63,35 @@ const updateListing = async (req, res) => {
       const activeBookings = bookings.filter(b => 
         ['pending', 'approved', 'active', 'picking_up', 'in_transit'].includes(b.status)
       );
-      
       if (activeBookings.length > 0) {
         return error(res, `Cannot deactivate — ${activeBookings.length} active booking(s) exist.`, 400);
       }
     }
-    await Listing.update(req.params.id, req.body);
-    return success(res, {}, 'Listing updated');
+
+    const updateFields = {};
+    if (req.body.title) updateFields.title = req.body.title;
+    if (req.body.description) updateFields.description = req.body.description;
+    if (req.body.location) {
+      updateFields.location = req.body.location.trim().charAt(0).toUpperCase() + req.body.location.trim().slice(1).toLowerCase();
+    }
+    if (req.body.size) updateFields.size = req.body.size;
+    if (req.body.price_per_month) updateFields.price_per_month = req.body.price_per_month;
+    if (req.body.is_active !== undefined) updateFields.is_active = req.body.is_active;
+
+    if (req.file) {
+      if (listing.image_url) {
+        const oldImagePath = path.join(__dirname, '..', listing.image_url);
+        if (fs.existsSync(oldImagePath)) {
+          fs.unlinkSync(oldImagePath);
+        }
+      }
+      updateFields.image_url = `/uploads/${req.file.filename}`;
+    }
+
+    await Listing.update(req.params.id, updateFields);
+    
+    const updated = await Listing.findById(req.params.id);
+    return success(res, { listing: updated }, 'Listing updated');
   } catch (err) { return error(res, err.message); }
 };
 
@@ -85,7 +107,6 @@ const deleteListing = async (req, res) => {
       const activeBookings = bookings.filter(b => 
         ['pending', 'approved', 'active', 'picking_up', 'in_transit'].includes(b.status)
       );
-      
       if (activeBookings.length > 0) {
         return error(res, `Cannot delete this listing. It has ${activeBookings.length} active booking(s). Cancel or complete them first.`, 400);
       }

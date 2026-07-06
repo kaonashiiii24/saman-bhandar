@@ -140,8 +140,6 @@ const updateDeliveryStatus = async (req, res) => {
       for (const group of groups) {
         await ChatGroup.deactivateGroup(group.id);
       }
-      
-      await Booking.updateStatus(delivery.booking_id, 'completed');
     }
     
     return success(res, {}, 'Status updated');

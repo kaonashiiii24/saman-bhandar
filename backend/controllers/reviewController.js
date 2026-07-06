@@ -1,5 +1,4 @@
 const db = require("../config/db");
-const { success, error } = require("../utils/apiResponse");
 
 exports.getListingReviews = async (req, res) => {
   try {
@@ -12,9 +11,9 @@ exports.getListingReviews = async (req, res) => {
        ORDER BY r.created_at DESC`,
       [req.params.listingId]
     );
-    res.json(success({ reviews: rows }));
+    return res.json({ success: true, data: { reviews: rows } });
   } catch (err) {
-    res.status(500).json(error(err.message));
+    return res.status(500).json({ success: false, message: err.message });
   }
 };
 
@@ -30,9 +29,9 @@ exports.getMyReviews = async (req, res) => {
        ORDER BY r.created_at DESC`,
       [req.user.id]
     );
-    res.json(success({ reviews: rows }));
+    return res.json({ success: true, data: { reviews: rows } });
   } catch (err) {
-    res.status(500).json(error(err.message));
+    return res.status(500).json({ success: false, message: err.message });
   }
 };
 
@@ -42,45 +41,46 @@ exports.checkCanReview = async (req, res) => {
       `SELECT id FROM bookings WHERE id = ? AND seller_id = ? AND status = 'completed'`,
       [req.params.bookingId, req.user.id]
     );
-    if (!booking) return res.json(success({ can_review: false }));
+    if (!booking) return res.json({ success: true, data: { can_review: false } });
 
     const [[existing]] = await db.query(
       `SELECT id FROM reviews WHERE booking_id = ? AND reviewer_id = ?`,
       [req.params.bookingId, req.user.id]
     );
-    res.json(success({ can_review: !existing }));
+    return res.json({ success: true, data: { can_review: !existing } });
   } catch (err) {
-    res.status(500).json(error(err.message));
+    return res.status(500).json({ success: false, message: err.message });
   }
 };
 
 exports.submitReview = async (req, res) => {
   const { booking_id, reviewee_id, rating, comment } = req.body;
   if (!booking_id || !reviewee_id || !rating) {
-    return res.status(400).json(error("booking_id, reviewee_id, and rating are required."));
+    return res.status(400).json({ success: false, message: "booking_id, reviewee_id, and rating are required." });
   }
   if (rating < 1 || rating > 5) {
-    return res.status(400).json(error("Rating must be between 1 and 5."));
+    return res.status(400).json({ success: false, message: "Rating must be between 1 and 5." });
   }
   try {
     const [[booking]] = await db.query(
       `SELECT id FROM bookings WHERE id = ? AND seller_id = ? AND status = 'completed'`,
       [booking_id, req.user.id]
     );
-    if (!booking) return res.status(403).json(error("Cannot review this booking."));
+    if (!booking) return res.status(403).json({ success: false, message: "Cannot review this booking." });
 
     const [[existing]] = await db.query(
       `SELECT id FROM reviews WHERE booking_id = ? AND reviewer_id = ?`,
       [booking_id, req.user.id]
     );
-    if (existing) return res.status(409).json(error("You have already reviewed this booking."));
+    if (existing) return res.status(409).json({ success: false, message: "You have already reviewed this booking." });
 
     const [result] = await db.query(
       `INSERT INTO reviews (booking_id, reviewer_id, reviewee_id, rating, comment) VALUES (?, ?, ?, ?, ?)`,
       [booking_id, req.user.id, reviewee_id, rating, comment || null]
     );
-    res.status(201).json(success({ id: result.insertId }, "Review submitted."));
+    return res.status(201).json({ success: true, data: { id: result.insertId }, message: "Review submitted." });
   } catch (err) {
-    res.status(500).json(error(err.message));
+    console.error("Review submission error:", err);
+    return res.status(500).json({ success: false, message: err.message });
   }
 };

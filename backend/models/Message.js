@@ -34,7 +34,6 @@ const findContacts = async (user_id) => {
     "MAX(unread_count) as unread_count, MAX(sort_time) as sort_time " +
     "FROM (" +
 
-    // [1,2,3,4] People you've exchanged messages with
     "SELECT IF(m.sender_id = ?, m.receiver_id, m.sender_id) as contact_id, " +
     "u.full_name as contact_name, u.role as contact_role, " +
     "m.message as last_message, m.created_at as last_time, " +
@@ -44,14 +43,12 @@ const findContacts = async (user_id) => {
 
     "UNION ALL " +
 
-    // [5,6] You're the seller → contact is the host
     "SELECT u.id, u.full_name, u.role, NULL, NULL, 0, b.created_at " +
     "FROM bookings b JOIN listings l ON b.listing_id = l.id JOIN users u ON u.id = l.host_id " +
     "WHERE b.seller_id = ? AND u.id != ? " +
 
     "UNION ALL " +
 
-    // [7,8] You're the host → contact is the seller
     "SELECT u.id, u.full_name, u.role, NULL, NULL, 0, b.created_at " +
     "FROM bookings b JOIN users u ON u.id = b.seller_id " +
     "JOIN listings l ON b.listing_id = l.id " +
@@ -59,28 +56,24 @@ const findContacts = async (user_id) => {
 
     "UNION ALL " +
 
-    // [9,10] You're the courier → contact is the seller
     "SELECT u.id, u.full_name, u.role, NULL, NULL, 0, b.created_at " +
     "FROM bookings b JOIN users u ON u.id = b.seller_id " +
     "WHERE b.courier_id = ? AND u.id != ? " +
 
     "UNION ALL " +
 
-    // [11,12] You're the courier → contact is the host
     "SELECT u.id, u.full_name, u.role, NULL, NULL, 0, b.created_at " +
     "FROM bookings b JOIN listings l ON b.listing_id = l.id JOIN users u ON u.id = l.host_id " +
     "WHERE b.courier_id = ? AND u.id != ? " +
 
     "UNION ALL " +
 
-    // [13,14] You're the courier (via delivery_request) → contact is the seller
     "SELECT u.id, u.full_name, u.role, NULL, NULL, 0, dr.created_at " +
     "FROM delivery_requests dr JOIN users u ON u.id = dr.seller_id " +
     "WHERE dr.courier_id = ? AND u.id != ? " +
 
     "UNION ALL " +
 
-    // [15,16] You're the courier (via delivery_request) → contact is the host
     "SELECT u.id, u.full_name, u.role, NULL, NULL, 0, dr.created_at " +
     "FROM delivery_requests dr " +
     "JOIN bookings b ON dr.booking_id = b.id " +
@@ -90,7 +83,6 @@ const findContacts = async (user_id) => {
 
     "UNION ALL " +
 
-    // [17,18,19] You're the seller or host → contact is the courier (via delivery_request)
     "SELECT u.id, u.full_name, u.role, NULL, NULL, 0, dr.created_at " +
     "FROM delivery_requests dr " +
     "JOIN bookings b ON dr.booking_id = b.id " +
@@ -103,14 +95,14 @@ const findContacts = async (user_id) => {
     "GROUP BY contact_id ORDER BY sort_time DESC, last_time DESC";
 
   const params = [
-    user_id, user_id, user_id, user_id,  // [1,2,3,4] messages block
-    user_id, user_id,                     // [5,6]  seller → host
-    user_id, user_id,                     // [7,8]  host → seller
-    user_id, user_id,                     // [9,10] courier → seller
-    user_id, user_id,                     // [11,12] courier → host
-    user_id, user_id,                     // [13,14] DR courier → seller
-    user_id, user_id,                     // [15,16] DR courier → host
-    user_id, user_id, user_id,            // [17,18,19] DR seller/host → courier
+    user_id, user_id, user_id, user_id,
+    user_id, user_id,
+    user_id, user_id,
+    user_id, user_id,
+    user_id, user_id,
+    user_id, user_id,
+    user_id, user_id,
+    user_id, user_id, user_id,
   ];
 
   const [rows] = await pool.query(sql, params);

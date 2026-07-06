@@ -5,6 +5,6 @@ const auth = require('../middleware/auth');
 router.get('/listing/:listingId', getListingReviews);
 router.get('/my', auth, getMyReviews);
 router.get('/can-review/:bookingId', auth, checkCanReview);
-router.post('/', auth, submitReview);
+router.post('/', auth, submitReview);  
 
 module.exports = router;

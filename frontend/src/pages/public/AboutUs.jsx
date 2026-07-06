@@ -56,7 +56,8 @@ export default function AboutUs() {
   return (
     <div className="bg-[#FAFAF9] overflow-x-hidden">
 
-      <section className="relative min-h-[70vh] sm:min-h-[80vh] flex items-center overflow-hidden">
+      
+      <section className="relative min-h-screen flex items-center overflow-hidden">
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat will-change-transform"
           style={{ 
@@ -72,35 +73,44 @@ export default function AboutUs() {
             <p className={`text-brick text-sm font-bold uppercase tracking-widest mb-6 transition-all duration-700 delay-100 ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
               Our story
             </p>
-            <h1 className={`font-display font-black text-5xl sm:text-6xl lg:text-7xl text-white tracking-tight leading-[1.05] mb-6 transition-all duration-700 delay-300 ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
+            <h1 className={`font-display font-black text-5xl sm:text-6xl lg:text-7xl text-white tracking-tight leading-[1.08] mb-6 transition-all duration-700 delay-300 ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
               Built in Nepal,<br />for Nepal.
             </h1>
-            <p className={`text-white/60 text-lg sm:text-xl leading-relaxed max-w-xl transition-all duration-700 delay-500 ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
+            <p className={`text-white/60 text-lg sm:text-xl leading-relaxed max-w-xl mb-8 transition-all duration-700 delay-500 ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
               SamanBhandar was born from a simple frustration. Nepal's growing community of home based sellers had no reliable, affordable way to store and deliver their products.
             </p>
+            <div className={`flex flex-wrap gap-3 transition-all duration-700 delay-700 ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
+              <Link
+                to="/contact"
+                className="inline-flex items-center gap-2 bg-white hover:bg-neutral-100 text-neutral-900 font-display font-bold px-6 py-3.5 rounded-xl transition-all shadow-xl hover:shadow-2xl hover:-translate-y-0.5 active:translate-y-0 text-sm"
+              >
+                Get in Touch <ArrowRight size={16} />
+              </Link>
+            </div>
           </div>
         </div>
       </section>
-<section className="py-8 bg-white border-b border-border">
-  <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8">
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-      {[
-        { value: `${publicStats?.total_sellers || 0}+`, label: 'Active sellers', sub: 'across Nepal' },
-        { value: `${publicStats?.total_hosts || 0}+`, label: 'Verified hosts', sub: 'manually checked' },
-        { value: `${publicStats?.total_cities || 0}+`, label: 'Locations covered', sub: 'and growing' },
-        { value: '4.8★', label: 'Average rating', sub: 'from reviews' },
-      ].map((stat, i) => (
-        <Reveal key={i} delay={i * 100} direction="scale">
-          <div className="text-center lg:text-left group cursor-default">
-            <p className="font-display font-black text-3xl text-[#1c1917] group-hover:text-brick transition-colors duration-300">{stat.value}</p>
-            <p className="text-sm font-semibold text-[#3a3a3a] mt-0.5">{stat.label}</p>
-            <p className="text-xs text-[#71717a] mt-0.5">{stat.sub}</p>
+
+      <section className="py-8 bg-white border-b border-border">
+        <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+            {[
+              { value: `${publicStats?.total_sellers || 0}+`, label: 'Active sellers', sub: 'across Nepal' },
+              { value: `${publicStats?.total_hosts || 0}+`, label: 'Verified hosts', sub: 'manually checked' },
+              { value: `${publicStats?.total_cities || 0}+`, label: 'Locations covered', sub: 'and growing' },
+              { value: '4.8★', label: 'Average rating', sub: 'from reviews' },
+            ].map((stat, i) => (
+              <Reveal key={i} delay={i * 100} direction="scale">
+                <div className="text-center lg:text-left group cursor-default">
+                  <p className="font-display font-black text-3xl text-[#1c1917] group-hover:text-brick transition-colors duration-300">{stat.value}</p>
+                  <p className="text-sm font-semibold text-[#3a3a3a] mt-0.5">{stat.label}</p>
+                  <p className="text-xs text-[#71717a] mt-0.5">{stat.sub}</p>
+                </div>
+              </Reveal>
+            ))}
           </div>
-        </Reveal>
-      ))}
-    </div>
-  </div>
-</section>
+        </div>
+      </section>
 
       <section className="py-24 bg-[#FAFAF9]">
         <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8">
