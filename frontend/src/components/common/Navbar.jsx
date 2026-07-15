@@ -1,6 +1,7 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../../hooks/useAuth'
+import useCms from '../../hooks/useCms'
 import { Package, LogOut, LayoutGrid, Menu, X, ChevronDown, LogIn, UserPlus } from 'lucide-react'
 
 export default function Navbar() {
@@ -11,6 +12,7 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const dropdownRef = useRef(null)
+  const { cms } = useCms()
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20)
@@ -35,15 +37,18 @@ export default function Navbar() {
 
   const handleLogout = () => { logout(); navigate('/') }
   const getDashboardLink = () => `/${user.role}/dashboard`
-
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
 
-  const navLinks = [
-    { to: '/listings', label: 'Find Storage' },
-    { to: '/services', label: 'Services' },
-    { to: '/about', label: 'About' },
-    { to: '/contact', label: 'Contact' },
+  const menuItems = cms?.navigation?.menu_items || [
+    { label: 'Find Storage', url: '/listings' },
+    { label: 'Services', url: '/services' },
+    { label: 'About', url: '/about' },
+    { label: 'Contact', url: '/contact' },
   ]
+
+  const websiteName = cms?.navigation?.website_name || 'Saman'
+  const websiteNameHighlight = cms?.navigation?.website_name_highlight || 'Bhandar'
+  const logoUrl = cms?.navigation?.logo_url || ''
 
   return (
     <nav className={`sticky top-0 z-50 transition-all duration-500 ${
@@ -64,21 +69,24 @@ export default function Navbar() {
             }}
             className="flex items-center gap-2.5 flex-shrink-0 group"
           >
-            <div className="w-8 h-8 bg-[#1a1a1a] rounded-md flex items-center justify-center transition-transform duration-200 group-hover:scale-105">
-              <Package size={16} className="text-white" />
-            </div>
+            {logoUrl ? (
+              <img src={logoUrl} alt={websiteName} className="w-8 h-8 rounded-md object-contain" />
+            ) : (
+              <div className="w-8 h-8 bg-[#1a1a1a] rounded-md flex items-center justify-center transition-transform duration-200 group-hover:scale-105">
+                <Package size={16} className="text-white" />
+              </div>
+            )}
             <span className="font-display font-black text-lg text-[#1a1a1a] tracking-tight">
-              Saman<span className="text-brick">Bhandar</span>
+              {websiteName}<span className="text-brick">{websiteNameHighlight}</span>
             </span>
           </Link>
 
           <ul className="hidden lg:flex items-center gap-0.5 flex-1">
-            {navLinks.map((link) => (
-              <li key={link.to}>
-                <Link to={link.to}
-                  onClick={scrollToTop}
+            {menuItems.map((link) => (
+              <li key={link.label}>
+                <Link to={link.url} onClick={scrollToTop}
                   className={`text-sm font-medium px-3.5 py-2 rounded-md transition-all duration-150 ${
-                    location.pathname === link.to
+                    location.pathname === link.url
                       ? 'text-[#1a1a1a] bg-chalk-dark font-semibold'
                       : 'text-[#52525b] hover:text-[#1a1a1a] hover:bg-chalk-dark'
                   }`}>
@@ -106,7 +114,7 @@ export default function Navbar() {
                   onClick={() => setDropdownOpen(!dropdownOpen)}
                   className="flex items-center gap-2 bg-[#1a1a1a] hover:bg-[#2d2d2d] text-white text-sm font-semibold px-5 py-2.5 rounded-md transition-colors duration-150"
                 >
-                  Sign in
+                  {cms?.navigation?.sign_in_text || 'Sign in'}
                   <ChevronDown size={14} className={`transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
               )}
@@ -151,7 +159,7 @@ export default function Navbar() {
                         onClick={() => setDropdownOpen(false)}
                         className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold text-white bg-[#1a1a1a] hover:bg-brick transition-colors"
                       >
-                        <UserPlus size={14} /> Sign up free
+                        <UserPlus size={14} /> {cms?.navigation?.sign_up_text || 'Sign up free'}
                       </Link>
                     </>
                   )}
@@ -172,11 +180,10 @@ export default function Navbar() {
       {mobileOpen && (
         <div className="lg:hidden bg-white border-t border-border animate-fade-in">
           <div className="max-w-container mx-auto px-4 py-4 space-y-1">
-            {navLinks.map((link) => (
-              <Link key={link.to} to={link.to}
-                onClick={scrollToTop}
+            {menuItems.map((link) => (
+              <Link key={link.label} to={link.url} onClick={scrollToTop}
                 className={`block px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
-                  location.pathname === link.to
+                  location.pathname === link.url
                     ? 'bg-chalk-dark text-[#1a1a1a] font-semibold'
                     : 'text-[#52525b] hover:text-[#1a1a1a] hover:bg-chalk'
                 }`}>
@@ -209,7 +216,7 @@ export default function Navbar() {
                   </Link>
                   <Link to="/register"
                     className="flex items-center gap-2 w-full bg-[#1a1a1a] text-white font-display font-bold rounded-md py-2.5 px-4 text-sm hover:bg-brick transition-colors">
-                    <UserPlus size={15} /> Sign up free
+                    <UserPlus size={15} /> {cms?.navigation?.sign_up_text || 'Sign up free'}
                   </Link>
                 </>
               )}

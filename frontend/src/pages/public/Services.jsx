@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { Warehouse, Package, Truck, CreditCard, MessageSquare, Star, Check, ArrowRight } from 'lucide-react'
+import * as Icons from 'lucide-react'
 import CTABanner from '../../components/common/CTABanner'
 import api from '../../services/api'
+import useCms from '../../hooks/useCms'
 
 function useInView(threshold = 0.12) {
   const ref = useRef(null)
@@ -31,13 +32,13 @@ function Reveal({ children, className = '', delay = 0, direction = 'up' }) {
   )
 }
 
-const SERVICES = [
-  { icon: Warehouse, title: 'Short-term Storage', desc: 'From a few days to several months. Flexible booking with no lock-in contracts. Ideal for home moves, shop overflow and seasonal stock.', tags: ['Flexible duration', 'Any size', 'Verified hosts'] },
-  { icon: Package, title: 'Inventory Management', desc: 'Track your stored goods item by item from your seller dashboard. Add, update or remove inventory records anytime from any device.', tags: ['Real-time', 'Item tracking', 'Export ready'] },
-  { icon: Truck, title: 'Courier Pickup & Drop-off', desc: 'Book a courier to collect from your address and deliver to your storage unit — or the reverse. Fast turnarounds across the valley.', tags: ['Same-day', 'GPS tracked', 'Insured'] },
-  { icon: CreditCard, title: 'Secure Payments', desc: 'Pay via eSewa or Khalti. All transactions are encrypted. Hosts receive payouts weekly — no manual chasing required.', tags: ['eSewa', 'Khalti', 'Weekly payouts'] },
-  { icon: MessageSquare, title: 'In-app Messaging', desc: 'Chat directly with your host or courier before and during your booking. No personal numbers shared — stay in the platform.', tags: ['Real-time', 'Secure', 'Archived'] },
-  { icon: Star, title: 'Reviews & Trust', desc: 'Every completed booking can receive a review. Transparent ratings keep the platform honest and help you choose with confidence.', tags: ['Verified reviews', 'Two-way', 'Public profiles'] },
+const fallbackServices = [
+  { title: 'Short-term Storage', description: 'From a few days to several months. Flexible booking with no lock-in contracts.', icon: 'Warehouse', tags: ['Flexible duration', 'Any size', 'Verified hosts'], display_order: 1 },
+  { title: 'Inventory Management', description: 'Track your stored goods item by item from your seller dashboard.', icon: 'Package', tags: ['Real-time', 'Item tracking', 'Export ready'], display_order: 2 },
+  { title: 'Courier Pickup & Drop-off', description: 'Book a courier to collect from your address and deliver to your storage unit.', icon: 'Truck', tags: ['Same-day', 'GPS tracked', 'Insured'], display_order: 3 },
+  { title: 'Secure Payments', description: 'Pay via eSewa or Khalti. All transactions are encrypted.', icon: 'CreditCard', tags: ['eSewa', 'Khalti', 'Weekly payouts'], display_order: 4 },
+  { title: 'In-app Messaging', description: 'Chat directly with your host or courier before and during your booking.', icon: 'MessageSquare', tags: ['Real-time', 'Secure', 'Archived'], display_order: 5 },
+  { title: 'Reviews & Trust', description: 'Every completed booking can receive a review.', icon: 'Star', tags: ['Verified reviews', 'Two-way', 'Public profiles'], display_order: 6 },
 ]
 
 const PLANS = [
@@ -46,10 +47,14 @@ const PLANS = [
   { name: 'Courier', price: 'Free', note: 'to join, earn per job', features: ['Browse available jobs', 'Accept pickups nearby', 'Track active deliveries', 'Transparent earnings', 'Weekly payment'], cta: 'Become a courier', to: '/register?role=courier', highlight: false },
 ]
 
+const ITEMS_PER_PAGE = 6
+
 export default function Services() {
   const [heroVisible, setHeroVisible] = useState(false)
   const [publicStats, setPublicStats] = useState(null)
   const [scrollY, setScrollY] = useState(0)
+  const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE)
+  const { cms } = useCms()
 
   useEffect(() => { setTimeout(() => setHeroVisible(true), 80) }, [])
 
@@ -65,21 +70,36 @@ export default function Services() {
       .catch(() => {})
   }, [])
 
-  const WHY = [
-    { num: `${publicStats?.total_sellers || 0}+`, label: 'Active sellers', sub: 'across Nepal' },
-    { num: `${publicStats?.total_hosts || 0}+`, label: 'Verified hosts', sub: 'manually checked' },
-    { num: `${publicStats?.total_cities || 0}+`, label: 'Locations covered', sub: 'and growing' },
-    { num: '4.8★', label: 'Average rating', sub: 'from reviews' },
-  ]
+  const servicesPage = cms?.services_page || {}
+  const allServices = cms?.services?.length ? cms.services : fallbackServices
+  const services = allServices.slice(0, visibleCount)
+  const hasMore = visibleCount < allServices.length
+
+  const loadMore = () => setVisibleCount(prev => prev + ITEMS_PER_PAGE)
+
+  const WHY = (servicesPage.why_stats || [
+    { key: 'total_sellers', label: 'Active sellers', sub: 'across Nepal' },
+    { key: 'total_hosts', label: 'Verified hosts', sub: 'manually checked' },
+    { key: 'total_cities', label: 'Locations covered', sub: 'and growing' },
+    { key: 'rating', label: 'Average rating', sub: 'from reviews', static_value: '4.8★' },
+  ]).map(stat => ({
+    ...stat,
+    num: stat.static_value || (
+      stat.key === 'total_sellers' ? `${publicStats?.total_sellers || 0}+` :
+      stat.key === 'total_hosts' ? `${publicStats?.total_hosts || 0}+` :
+      stat.key === 'total_cities' ? `${publicStats?.total_cities || 0}+` :
+      '4.8★'
+    )
+  }))
 
   return (
     <div className="bg-[#FAFAF9] overflow-x-hidden">
 
-      <section className="relative min-h-[70vh] sm:min-h-[80vh] flex items-center overflow-hidden">
+      <section className="relative min-h-screen flex items-center overflow-hidden">
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat will-change-transform"
           style={{ 
-            backgroundImage: "url('/images/services-hero.jpg')",
+            backgroundImage: `url('${servicesPage.hero_image || '/images/services-hero.jpg'}')`,
             transform: `translateY(${scrollY * 0.15}px)`
           }}
         />
@@ -93,17 +113,17 @@ export default function Services() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brick opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-brick" />
               </span>
-              What we offer
+              {servicesPage.hero_badge || 'What we offer'}
             </div>
             <h1 className={`font-display font-black text-5xl sm:text-6xl lg:text-7xl text-white tracking-tight leading-[1.08] mb-5 transition-all duration-700 delay-300 ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
-              Everything you need to store and move goods in Nepal.
+              {servicesPage.hero_title || 'Everything you need to store and move goods in Nepal.'}
             </h1>
             <p className={`text-white/50 text-lg leading-relaxed mb-8 max-w-xl transition-all duration-700 delay-500 ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
-              SamanBhandar connects renters, hosts and couriers on one platform — with tools built specifically for each role.
+              {servicesPage.hero_description || 'SamanBhandar connects renters, hosts and couriers on one platform — with tools built specifically for each role.'}
             </p>
             <div className={`flex flex-wrap gap-3 transition-all duration-700 delay-700 ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
               <Link to="/register" className="inline-flex items-center gap-2 bg-brick hover:bg-brick-dark text-white font-display font-bold px-5 py-3 rounded-md transition-all hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 text-sm group">
-                Get started free <ArrowRight size={15} className="group-hover:translate-x-1 transition-transform" />
+                Get started free <Icons.ArrowRight size={15} className="group-hover:translate-x-1 transition-transform" />
               </Link>
               <Link to="/listings" className="inline-flex items-center gap-2 border border-white/20 text-white font-display font-bold px-5 py-3 rounded-md hover:bg-white/8 transition-all hover:-translate-y-0.5 active:translate-y-0 text-sm">
                 Browse storage
@@ -136,23 +156,38 @@ export default function Services() {
             <h2 className="font-display font-black text-4xl text-[#1c1917] tracking-tight max-w-lg leading-tight">Six tools. One platform. Zero hassle.</h2>
           </Reveal>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {SERVICES.map((s, i) => (
-              <Reveal key={i} delay={i * 80} direction="scale">
-                <div className="group bg-white border border-border rounded-xl p-6 h-full flex flex-col hover:border-[#3a3a3a] hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-                  <div className="w-10 h-10 bg-[#F4F4F5] rounded-lg flex items-center justify-center mb-4 group-hover:bg-[#1c1917] group-hover:scale-110 transition-all duration-300">
-                    <s.icon size={18} className="text-[#3a3a3a] group-hover:text-white transition-colors duration-300" />
+            {services.map((s, i) => {
+              const ServiceIcon = Icons[s.icon] || Icons.Package
+              return (
+                <Reveal key={i} delay={i * 80} direction="scale">
+                  <div className="group bg-white border border-border rounded-xl p-6 h-full flex flex-col hover:border-[#3a3a3a] hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                    <div className="w-10 h-10 bg-[#F4F4F5] rounded-lg flex items-center justify-center mb-4 group-hover:bg-[#1c1917] group-hover:scale-110 transition-all duration-300">
+                      <ServiceIcon size={18} className="text-[#3a3a3a] group-hover:text-white transition-colors duration-300" />
+                    </div>
+                    <h3 className="font-display font-bold text-[#1c1917] mb-2">{s.title}</h3>
+                    <p className="text-[#71717a] text-sm leading-relaxed flex-1 mb-4">{s.description}</p>
+                    {s.tags && s.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mt-auto">
+                        {s.tags.map((t) => (
+                          <span key={t} className="text-[10px] font-semibold px-2.5 py-1 bg-[#F4F4F5] text-[#52525b] rounded-full group-hover:bg-brick-light group-hover:text-brick transition-colors duration-300">{t}</span>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <h3 className="font-display font-bold text-[#1c1917] mb-2">{s.title}</h3>
-                  <p className="text-[#71717a] text-sm leading-relaxed flex-1 mb-4">{s.desc}</p>
-                  <div className="flex flex-wrap gap-1.5 mt-auto">
-                    {s.tags.map((t) => (
-                      <span key={t} className="text-[10px] font-semibold px-2.5 py-1 bg-[#F4F4F5] text-[#52525b] rounded-full group-hover:bg-brick-light group-hover:text-brick transition-colors duration-300">{t}</span>
-                    ))}
-                  </div>
-                </div>
-              </Reveal>
-            ))}
+                </Reveal>
+              )
+            })}
           </div>
+          {hasMore && (
+            <div className="mt-10 text-center">
+              <button
+                onClick={loadMore}
+                className="inline-flex items-center gap-2 px-8 py-3 border border-[#1c1917] text-[#1c1917] font-display font-bold rounded-xl hover:bg-[#1c1917] hover:text-white transition-colors text-sm"
+              >
+                Load More Services <Icons.ArrowRight size={16} />
+              </button>
+            </div>
+          )}
         </div>
       </section>
 
@@ -182,7 +217,7 @@ export default function Services() {
                     ))}
                   </ul>
                   <Link to="/register" className="inline-flex items-center gap-2 mt-6 text-sm font-bold text-[#1c1917] hover:text-brick transition-colors group/link">
-                    Get started <ArrowRight size={14} className="group-hover/link:translate-x-1 transition-transform" />
+                    Get started <Icons.ArrowRight size={14} className="group-hover/link:translate-x-1 transition-transform" />
                   </Link>
                 </div>
               </Reveal>
@@ -217,7 +252,7 @@ export default function Services() {
                     {p.features.map((f) => (
                       <li key={f} className="flex items-start gap-2.5 group/item">
                         <div className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5 transition-colors duration-300 ${p.highlight ? 'bg-brick/30 group-hover/item:bg-brick/50' : 'bg-brick-light group-hover/item:bg-brick/30'}`}>
-                          <Check size={9} className="text-brick" />
+                          <Icons.Check size={9} className="text-brick" />
                         </div>
                         <span className={`text-sm leading-relaxed ${p.highlight ? 'text-white/70' : 'text-[#3a3a3a]'}`}>{f}</span>
                       </li>
@@ -226,7 +261,7 @@ export default function Services() {
                   <Link to={p.to} className={`flex items-center justify-center gap-2 py-3 rounded-md text-sm font-display font-bold transition-all hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 ${
                     p.highlight ? 'bg-brick hover:bg-brick-dark text-white' : 'bg-[#F4F4F5] hover:bg-[#E4E4E7] text-[#1c1917]'
                   }`}>
-                    {p.cta} <ArrowRight size={14} />
+                    {p.cta} <Icons.ArrowRight size={14} />
                   </Link>
                 </div>
               </Reveal>

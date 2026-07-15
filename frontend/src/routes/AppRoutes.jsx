@@ -38,8 +38,21 @@ import Analytics from '../pages/admin/Analytics'
 import AdminDocumentation from '../pages/admin/Documentation'
 import NotFound from '../pages/NotFound'
 import PaymentSimulate from '../pages/public/PaymentSimulate'
-
-
+import CmsLayout from '../pages/admin/cms/CmsLayout'
+import HeroManager from '../pages/admin/cms/HeroManager'
+import AboutManager from '../pages/admin/cms/AboutManager'
+import ServicesManager from '../pages/admin/cms/ServicesManager'
+import HowItWorksManager from '../pages/admin/cms/HowItWorksManager'
+import FeaturesManager from '../pages/admin/cms/FeaturesManager'
+import TestimonialsManager from '../pages/admin/cms/TestimonialsManager'
+import FaqManager from '../pages/admin/cms/FaqManager'
+import ContactManager from '../pages/admin/cms/ContactManager'
+import FooterManager from '../pages/admin/cms/FooterManager'
+import SeoManager from '../pages/admin/cms/SeoManager'
+import ThemeManager from '../pages/admin/cms/ThemeManager'
+import MediaManager from '../pages/admin/cms/MediaManager'
+import AdminProfile from '../pages/admin/Profile'
+import { ToastProvider } from '../context/ToastContext'
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useAuth()
@@ -103,6 +116,22 @@ export default function AppRoutes() {
         <Route path="/admin/listings" element={<ManageListings />} />
         <Route path="/admin/analytics" element={<Analytics />} />
         <Route path="/admin/docs" element={<AdminDocumentation />} />
+        <Route path="/admin/profile" element={<AdminProfile />} />
+        <Route path="/admin/cms" element={<ToastProvider><CmsLayout /></ToastProvider>}>
+          <Route index element={<HeroManager />} />
+          <Route path="hero" element={<HeroManager />} />
+          <Route path="about" element={<AboutManager />} />
+          <Route path="services" element={<ServicesManager />} />
+          <Route path="how-it-works" element={<HowItWorksManager />} />
+          <Route path="features" element={<FeaturesManager />} />
+          <Route path="testimonials" element={<TestimonialsManager />} />
+          <Route path="faqs" element={<FaqManager />} />
+          <Route path="contact" element={<ContactManager />} />
+          <Route path="footer" element={<FooterManager />} />
+          <Route path="seo" element={<SeoManager />} />
+          <Route path="theme" element={<ThemeManager />} />
+          <Route path="media" element={<MediaManager />} />
+        </Route>
       </Route>
 
       <Route path="*" element={<NotFound />} />

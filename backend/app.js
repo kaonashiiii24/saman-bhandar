@@ -27,6 +27,9 @@ app.use('/api/courier',   require('./routes/courierRoutes'));
 app.use('/api/reviews', require('./routes/reviewRoutes'));
 app.use('/api/deliveries', require('./routes/deliveryRoutes'));
 app.use('/api/group-chat', require('./routes/groupChatRoutes'));
+app.use('/api/cms', require('./routes/cmsRoutes'));
+app.use('/api/admin/cms', require('./routes/cmsRoutes'));
+
 
 app.get('/', (req, res) => res.json({ message: 'Saman-Bhandar API running ' }));
 

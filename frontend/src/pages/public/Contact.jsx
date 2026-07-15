@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { Mail, Phone, MapPin, Clock, Send, CheckCircle2, ArrowRight } from 'lucide-react'
 import CTABanner from '../../components/common/CTABanner'
+import useCms from '../../hooks/useCms'
 
 function useInView(threshold = 0.12) {
   const ref = useRef(null)
@@ -39,6 +40,7 @@ export default function Contact() {
   const [loading, setLoading] = useState(false)
   const [scrollY, setScrollY] = useState(0)
   const contactFormRef = useRef(null)
+  const { cms } = useCms()
 
   useEffect(() => { setTimeout(() => setHeroVisible(true), 80) }, [])
 
@@ -59,11 +61,23 @@ export default function Contact() {
     contactFormRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
+  const contact = cms?.contact || {}
+  const socialLinks = contact.social_media_links || contact.social_links || [
+    { platform: 'facebook', url: '#' },
+    { platform: 'instagram', url: '#' },
+  ]
+
   const info = [
-    { icon: Mail, label: 'Email', value: 'hello@samanbhandar.com', sub: 'Reply within 24 hours' },
-    { icon: Phone, label: 'Phone', value: '+977 01-XXXXXXX', sub: 'Mon–Fri, 9am–6pm' },
-    { icon: MapPin, label: 'Office', value: 'Naybazar, Pokhara', sub: 'Ward 26, Nepal' },
-    { icon: Clock, label: 'Hours', value: 'Mon – Fri', sub: '9:00 AM – 6:00 PM NPT' },
+    { icon: Mail, label: 'Email', value: contact.email || 'hello@samanbhandar.com', sub: contact.email_sub || 'Reply within 24 hours' },
+    { icon: Phone, label: 'Phone', value: contact.phone || '+977 01-XXXXXXX', sub: contact.phone_sub || 'Mon–Fri, 9am–6pm' },
+    { icon: MapPin, label: 'Office', value: contact.address || 'Naybazar, Pokhara', sub: contact.address_sub || 'Ward 26, Nepal' },
+    { icon: Clock, label: 'Hours', value: contact.hours || 'Mon – Fri', sub: contact.hours_sub || '9:00 AM – 6:00 PM NPT' },
+  ]
+
+  const quickFaqs = contact.quick_faqs || [
+    { question: 'How quickly do you respond?', answer: 'We aim to respond within 24 hours on working days.' },
+    { question: 'Can I visit your office?', answer: 'Yes — Mon to Fri, 9am to 6pm. No appointment needed.' },
+    { question: 'Do you offer partnerships?', answer: 'Yes. Email partnerships@samanbhandar.com to get started.' },
   ]
 
   return (
@@ -73,7 +87,7 @@ export default function Contact() {
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat will-change-transform"
           style={{ 
-            backgroundImage: "url('/images/contact-hero.jpg')",
+            backgroundImage: `url('${contact.hero_image || '/images/contact-hero.jpg'}')`,
             transform: `translateY(${scrollY * 0.15}px)`
           }}
         />
@@ -87,13 +101,13 @@ export default function Contact() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brick opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-brick" />
               </span>
-              Get in touch
+              {contact.hero_badge || 'Get in touch'}
             </div>
             <h1 className={`font-display font-black text-5xl sm:text-6xl lg:text-7xl text-white tracking-tight leading-[1.08] mb-5 transition-all duration-700 delay-300 ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
-              We'd love to<br />hear from you.
+              {contact.hero_title || "We'd love to"}<br />{contact.hero_title_line2 || 'hear from you.'}
             </h1>
             <p className={`text-white/50 text-lg leading-relaxed mb-8 max-w-xl transition-all duration-700 delay-500 ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
-              Have a question, feedback or want to partner with us? We typically respond within one business day.
+              {contact.hero_description || 'Have a question, feedback or want to partner with us? We typically respond within one business day.'}
             </p>
             <div className={`flex flex-wrap gap-3 transition-all duration-700 delay-700 ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
               <button
@@ -133,8 +147,8 @@ export default function Contact() {
           <div className="grid lg:grid-cols-2 gap-12 items-start">
             <Reveal direction="left">
               <div className="bg-white border border-border rounded-xl p-8 hover:shadow-lg transition-shadow duration-300">
-                <h2 className="font-display font-black text-2xl text-[#1c1917] tracking-tight mb-1">Send a message</h2>
-                <p className="text-[#71717a] text-sm mb-6">We'll get back to you within 24 hours.</p>
+                <h2 className="font-display font-black text-2xl text-[#1c1917] tracking-tight mb-1">{contact.heading || 'Send a message'}</h2>
+                <p className="text-[#71717a] text-sm mb-6">{contact.description || "We'll get back to you within 24 hours."}</p>
                 {sent ? (
                   <div className="flex flex-col items-center py-12 text-center animate-fade-in">
                     <div className="w-14 h-14 bg-[#F4F4F5] rounded-xl flex items-center justify-center mb-4 animate-bounce-in">
@@ -183,13 +197,13 @@ export default function Contact() {
             <Reveal direction="right" delay={100}>
               <div className="space-y-5">
                 <div className="bg-[#1c1917] rounded-xl p-8 hover:shadow-xl transition-shadow duration-300">
-                  <h3 className="font-display font-black text-xl text-white mb-2">Find us in Pokhara</h3>
+                  <h3 className="font-display font-black text-xl text-white mb-2">{contact.office_heading || 'Find us in Pokhara'}</h3>
                   <p className="text-white/50 text-sm mb-6 leading-relaxed">Our office is in Nayabazae, Pokhara. Drop by during working hours — we'd love to meet you.</p>
                   <div className="space-y-3">
                     {[
-                      { icon: MapPin, text: 'Newroad , Pokhara' },
-                      { icon: Phone, text: '+977 01-XXXXXXX' },
-                      { icon: Mail, text: 'hello@samanbhandar.com' },
+                      { icon: MapPin, text: contact.office_address || contact.address || 'Newroad, Pokhara' },
+                      { icon: Phone, text: contact.phone || '+977 01-XXXXXXX' },
+                      { icon: Mail, text: contact.email || 'hello@samanbhandar.com' },
                     ].map((item, i) => (
                       <div key={i} className="flex items-center gap-3 text-sm text-white/50 group cursor-default">
                         <div className="w-7 h-7 bg-white/8 rounded-md flex items-center justify-center shrink-0 group-hover:bg-brick/20 transition-colors duration-300">
@@ -200,26 +214,27 @@ export default function Contact() {
                     ))}
                   </div>
                   <div className="flex gap-2 mt-6">
-                    <a href="#" className="w-8 h-8 bg-white/8 rounded-md flex items-center justify-center text-white/50 hover:bg-white/15 hover:text-white hover:-translate-y-0.5 transition-all">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
-                    </a>
-                    <a href="#" className="w-8 h-8 bg-white/8 rounded-md flex items-center justify-center text-white/50 hover:bg-white/15 hover:text-white hover:-translate-y-0.5 transition-all">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
-                    </a>
+                    {socialLinks.map((link) => (
+                      <a key={link.platform} href={link.url} className="w-8 h-8 bg-white/8 rounded-md flex items-center justify-center text-white/50 hover:bg-white/15 hover:text-white hover:-translate-y-0.5 transition-all">
+                        {link.platform === 'facebook' ? (
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+                        ) : link.platform === 'instagram' ? (
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                        ) : (
+                          <span className="text-xs font-bold">{link.platform[0].toUpperCase()}</span>
+                        )}
+                      </a>
+                    ))}
                   </div>
                 </div>
 
                 <div className="bg-white border border-border rounded-xl p-6 hover:shadow-lg transition-shadow duration-300">
                   <h3 className="font-display font-bold text-[#1c1917] mb-4">Quick answers</h3>
                   <div className="space-y-4">
-                    {[
-                      { q: 'How quickly do you respond?', a: 'We aim to respond within 24 hours on working days.' },
-                      { q: 'Can I visit your office?', a: 'Yes — Mon to Fri, 9am to 6pm. No appointment needed.' },
-                      { q: 'Do you offer partnerships?', a: 'Yes. Email partnerships@samanbhandar.com to get started.' },
-                    ].map((faq, i) => (
+                    {quickFaqs.map((faq, i) => (
                       <div key={i} className="border-b border-border pb-4 last:border-0 last:pb-0">
-                        <p className="text-sm font-bold text-[#1c1917] mb-1">{faq.q}</p>
-                        <p className="text-xs text-[#71717a] leading-relaxed">{faq.a}</p>
+                        <p className="text-sm font-bold text-[#1c1917] mb-1">{faq.question}</p>
+                        <p className="text-xs text-[#71717a] leading-relaxed">{faq.answer}</p>
                       </div>
                     ))}
                   </div>

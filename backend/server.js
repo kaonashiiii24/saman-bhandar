@@ -13,6 +13,18 @@ const Payment = require('./models/Payment');
 const Review = require('./models/Review');
 const DeliveryRequest = require('./models/DeliveryRequest');
 const ChatGroup = require('./models/ChatGroup');
+const SiteSetting = require('./models/SiteSetting');
+const HomepageSection = require('./models/HomepageSection');
+const Service = require('./models/Service');
+const HowItWorksStep = require('./models/HowItWorksStep');
+const Feature = require('./models/Feature');
+const Testimonial = require('./models/Testimonial');
+const Faq = require('./models/Faq');
+const ContactSetting = require('./models/ContactSetting');
+const FooterSetting = require('./models/FooterSetting');
+const ThemeSetting = require('./models/ThemeSetting');
+const Media = require('./models/Media');
+const AboutValue = require('./models/AboutValue');
 
 const server = http.createServer(app);
 
@@ -37,6 +49,18 @@ const initDB = async () => {
   await Review.createTable();
   await DeliveryRequest.createTable(); 
   await ChatGroup.createTable();
+  await SiteSetting.createTable();
+  await HomepageSection.createTable();
+  await Service.createTable();
+  await HowItWorksStep.createTable();
+  await Feature.createTable();
+  await Testimonial.createTable();
+  await Faq.createTable();
+  await ContactSetting.createTable();
+  await FooterSetting.createTable();
+  await ThemeSetting.createTable();
+  await Media.createTable();
+  await AboutValue.createTable();
 };
 
 initDB()

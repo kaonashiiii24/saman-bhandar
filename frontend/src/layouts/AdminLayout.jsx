@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Outlet, useLocation, Link } from 'react-router-dom'
-import { LayoutDashboard, Users, Building2, BarChart3,BookOpen, LogOut, ShieldCheck, ChevronLeft, ChevronRight, Home } from 'lucide-react'
+import { LayoutDashboard, Users, Building2, BarChart3, BookOpen, LogOut, ShieldCheck, ChevronLeft, ChevronRight, Home, Settings, UserCircle } from 'lucide-react'
 import SidebarLink from '../components/common/SidebarLink'
 import DashboardTopbar from '../components/common/DashboardTopbar'
 import { useAuth } from '../hooks/useAuth'
@@ -9,16 +9,19 @@ const NAV = [
   { to: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/admin/users', icon: Users, label: 'Users' },
   { to: '/admin/listings', icon: Building2, label: 'Listings' },
+  { to: '/admin/cms', icon: Settings, label: 'Website CMS' },
   { to: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
-  { to: '/admin/docs', icon: BookOpen, label: 'Documentation' }
+  { to: '/admin/docs', icon: BookOpen, label: 'Documentation' },
+  { to: '/admin/profile', icon: UserCircle, label: 'Profile' },
 ]
 
 const PAGE_TITLES = {
   '/admin/dashboard': 'Dashboard',
   '/admin/users': 'Manage Users',
   '/admin/listings': 'Manage Listings',
+  '/admin/cms': 'Website CMS',
   '/admin/analytics': 'Analytics',
-  
+  '/admin/profile': 'Profile',
 }
 
 export default function AdminLayout() {
@@ -27,6 +30,8 @@ export default function AdminLayout() {
   const { logout } = useAuth()
   const location = useLocation()
   const title = PAGE_TITLES[location.pathname] || 'Admin'
+
+  const isCmsRoute = location.pathname.startsWith('/admin/cms')
 
   useEffect(() => { setMobileOpen(false) }, [location.pathname])
   useEffect(() => {
@@ -72,9 +77,15 @@ export default function AdminLayout() {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <DashboardTopbar onMenuToggle={() => setMobileOpen(!mobileOpen)} mobileOpen={mobileOpen} title={title} />
         <main className="flex-1 overflow-y-auto bg-chalk">
-          <div className="p-4 sm:p-5 lg:p-6 max-w-7xl mx-auto animate-fade-in">
-            <Outlet />
-          </div>
+          {isCmsRoute ? (
+            <div className="animate-fade-in">
+              <Outlet />
+            </div>
+          ) : (
+            <div className="p-4 sm:p-5 lg:p-6 max-w-7xl mx-auto animate-fade-in">
+              <Outlet />
+            </div>
+          )}
         </main>
       </div>
     </div>

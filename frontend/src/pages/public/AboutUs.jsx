@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, Target, Heart, Zap, Users, Building2, MapPin, Star, CheckCircle } from 'lucide-react'
+import { ArrowRight, Users, Building2, MapPin, Star, CheckCircle } from 'lucide-react'
+import * as Icons from 'lucide-react'
 import CTABanner from '../../components/common/CTABanner'
 import api from '../../services/api'
+import useCms from '../../hooks/useCms'
 
 function useInView(threshold = 0.12) {
   const ref = useRef(null)
@@ -27,17 +29,11 @@ function Reveal({ children, className = '', delay = 0 }) {
   )
 }
 
-const values = [
-  { icon: Target, label: 'Mission-driven', desc: 'We exist to make storage and logistics accessible for every Nepali seller, big or small.' },
-  { icon: Heart, label: 'Community first', desc: 'Every feature we build starts with feedback from our sellers, hosts and couriers.' },
-  { icon: Zap, label: 'Move fast', desc: 'We ship fast, learn fast and iterate on what actually matters to our users.' },
-  { icon: Star, label: 'Quality always', desc: 'Every host is verified. Every feature is tested. We never compromise on trust.' },
-]
-
 export default function AboutUs() {
   const [heroVisible, setHeroVisible] = useState(false)
   const [publicStats, setPublicStats] = useState(null)
   const [scrollY, setScrollY] = useState(0)
+  const { cms } = useCms()
 
   useEffect(() => { setTimeout(() => setHeroVisible(true), 80) }, [])
 
@@ -53,15 +49,31 @@ export default function AboutUs() {
       .catch(() => {})
   }, [])
 
+  const about = cms?.about || {}
+  const values = cms?.aboutValues || []
+
+  const statsLabels = about.stats_labels || [
+    { key: 'total_sellers', label: 'Active sellers', sub: 'across Nepal' },
+    { key: 'total_hosts', label: 'Verified hosts', sub: 'manually checked' },
+    { key: 'total_cities', label: 'Locations covered', sub: 'and growing' },
+    { key: 'rating', label: 'Average rating', sub: 'from reviews', static_value: '4.8★' },
+  ]
+
+  const statsData = {
+    total_sellers: `${publicStats?.total_sellers || 0}+`,
+    total_hosts: `${publicStats?.total_hosts || 0}+`,
+    total_cities: `${publicStats?.total_cities || 0}+`,
+    rating: '4.8★',
+  }
+
   return (
     <div className="bg-[#FAFAF9] overflow-x-hidden">
 
-      
       <section className="relative min-h-screen flex items-center overflow-hidden">
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat will-change-transform"
           style={{ 
-            backgroundImage: "url('/images/about-hero.jpg')",
+            backgroundImage: `url('${about.hero_image || '/images/about-hero.jpg'}')`,
             transform: `translateY(${scrollY * 0.15}px)`
           }}
         />
@@ -71,20 +83,20 @@ export default function AboutUs() {
         <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 w-full relative z-10">
           <div className="max-w-2xl">
             <p className={`text-brick text-sm font-bold uppercase tracking-widest mb-6 transition-all duration-700 delay-100 ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
-              Our story
+              {about.hero_badge || 'Our story'}
             </p>
             <h1 className={`font-display font-black text-5xl sm:text-6xl lg:text-7xl text-white tracking-tight leading-[1.08] mb-6 transition-all duration-700 delay-300 ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
-              Built in Nepal,<br />for Nepal.
+              {about.hero_title || 'Built in Nepal,'}<br />{about.hero_title_line2 || 'for Nepal.'}
             </h1>
             <p className={`text-white/60 text-lg sm:text-xl leading-relaxed max-w-xl mb-8 transition-all duration-700 delay-500 ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
-              SamanBhandar was born from a simple frustration. Nepal's growing community of home based sellers had no reliable, affordable way to store and deliver their products.
+              {about.hero_description || "SamanBhandar was born from a simple frustration. Nepal's growing community of home based sellers had no reliable, affordable way to store and deliver their products."}
             </p>
             <div className={`flex flex-wrap gap-3 transition-all duration-700 delay-700 ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
               <Link
-                to="/contact"
+                to={about.hero_cta_link || '/contact'}
                 className="inline-flex items-center gap-2 bg-white hover:bg-neutral-100 text-neutral-900 font-display font-bold px-6 py-3.5 rounded-xl transition-all shadow-xl hover:shadow-2xl hover:-translate-y-0.5 active:translate-y-0 text-sm"
               >
-                Get in Touch <ArrowRight size={16} />
+                {about.hero_cta_text || 'Get in Touch'} <ArrowRight size={16} />
               </Link>
             </div>
           </div>
@@ -94,15 +106,12 @@ export default function AboutUs() {
       <section className="py-8 bg-white border-b border-border">
         <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              { value: `${publicStats?.total_sellers || 0}+`, label: 'Active sellers', sub: 'across Nepal' },
-              { value: `${publicStats?.total_hosts || 0}+`, label: 'Verified hosts', sub: 'manually checked' },
-              { value: `${publicStats?.total_cities || 0}+`, label: 'Locations covered', sub: 'and growing' },
-              { value: '4.8★', label: 'Average rating', sub: 'from reviews' },
-            ].map((stat, i) => (
-              <Reveal key={i} delay={i * 100} direction="scale">
+            {statsLabels.map((stat, i) => (
+              <Reveal key={i} delay={i * 100}>
                 <div className="text-center lg:text-left group cursor-default">
-                  <p className="font-display font-black text-3xl text-[#1c1917] group-hover:text-brick transition-colors duration-300">{stat.value}</p>
+                  <p className="font-display font-black text-3xl text-[#1c1917] group-hover:text-brick transition-colors duration-300">
+                    {stat.static_value || statsData[stat.key] || 0}
+                  </p>
                   <p className="text-sm font-semibold text-[#3a3a3a] mt-0.5">{stat.label}</p>
                   <p className="text-xs text-[#71717a] mt-0.5">{stat.sub}</p>
                 </div>
@@ -116,12 +125,14 @@ export default function AboutUs() {
         <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-16 items-start">
             <Reveal>
-              <p className="text-xs font-bold text-brick uppercase tracking-widest mb-4">Why we built this</p>
-              <h2 className="font-display font-black text-4xl text-[#1c1917] tracking-tight mb-6 leading-tight">The problem we saw and decided to fix.</h2>
+              <p className="text-xs font-bold text-brick uppercase tracking-widest mb-4">{about.story_badge || 'Why we built this'}</p>
+              <h2 className="font-display font-black text-4xl text-[#1c1917] tracking-tight mb-6 leading-tight">{about.story_title || 'The problem we saw and decided to fix.'}</h2>
               <div className="space-y-4 text-[#71717a] text-sm leading-relaxed">
-                <p>In early 2025, our founders noticed that thousands of sellers running Instagram and Facebook shops in Nepal were storing products in their bedrooms, hallways and living rooms, which limited their ability to grow.</p>
-                <p>At the same time, thousands of Nepalis had unused rooms, garages and godowns sitting empty. We saw an opportunity to connect these two groups and create real value for both sides.</p>
-                <p>SamanBhandar launched in mid 2025 as Nepal's first peer to peer micro warehouse marketplace. Within months, hundreds of sellers were storing products with verified hosts across the Pokhara Valley.</p>
+                {(about.story_paragraphs || [
+                  "In early 2025, our founders noticed that thousands of sellers running Instagram and Facebook shops in Nepal were storing products in their bedrooms, hallways and living rooms, which limited their ability to grow.",
+                  "At the same time, thousands of Nepalis had unused rooms, garages and godowns sitting empty. We saw an opportunity to connect these two groups and create real value for both sides.",
+                  "SamanBhandar launched in mid 2025 as Nepal's first peer to peer micro warehouse marketplace. Within months, hundreds of sellers were storing products with verified hosts across the Pokhara Valley.",
+                ]).map((p, idx) => <p key={idx}>{p}</p>)}
               </div>
               <Link to="/register" className="inline-flex items-center gap-2 mt-8 bg-[#1c1917] hover:bg-brick text-white font-display font-bold px-6 py-3.5 rounded-md transition-all duration-300 text-sm hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0">
                 Join us today <ArrowRight size={16} />
@@ -152,7 +163,7 @@ export default function AboutUs() {
                       <CheckCircle size={14} className="text-emerald-500" />
                       <p className="text-xs font-bold text-[#1c1917]">Fastest growing</p>
                     </div>
-                    <p className="text-xs text-[#71717a] mt-1">logistics startup in Nepal — 2025</p>
+                    <p className="text-xs text-[#71717a] mt-1">{about.side_card_text || 'logistics startup in Nepal — 2025'}</p>
                   </div>
                 </div>
 
@@ -178,27 +189,33 @@ export default function AboutUs() {
         </div>
       </section>
 
-      <section className="py-24 bg-white border-y border-border">
-        <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8">
-          <Reveal className="mb-14">
-            <p className="text-xs font-bold text-brick uppercase tracking-widest mb-3">Our values</p>
-            <h2 className="font-display font-black text-4xl text-[#1c1917] tracking-tight leading-tight">What drives us every day.</h2>
-          </Reveal>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {values.map((v, i) => (
-              <Reveal key={i} delay={i * 80}>
-                <div className="border border-border rounded-xl p-6 h-full hover:border-[#3a3a3a] hover:shadow-md hover:-translate-y-1 transition-all duration-300">
-                  <div className="w-9 h-9 bg-[#F4F4F5] rounded-md flex items-center justify-center mb-4 group-hover:bg-[#1c1917] transition-colors duration-300">
-                    <v.icon size={17} className="text-[#3a3a3a]" />
-                  </div>
-                  <h4 className="font-display font-bold text-[#1c1917] mb-2">{v.label}</h4>
-                  <p className="text-[#71717a] text-sm leading-relaxed">{v.desc}</p>
-                </div>
-              </Reveal>
-            ))}
+      {values.length > 0 && (
+        <section className="py-24 bg-white border-y border-border">
+          <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8">
+            <Reveal className="mb-14">
+              <p className="text-xs font-bold text-brick uppercase tracking-widest mb-3">Our values</p>
+              <h2 className="font-display font-black text-4xl text-[#1c1917] tracking-tight leading-tight">What drives us every day.</h2>
+            </Reveal>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              {values.map((v, i) => {
+                const ValueIcon = v.icon ? (Icons[v.icon] || Icons.Target) : Icons.Target
+                return (
+                  <Reveal key={i} delay={i * 80}>
+                    <div className="border border-border rounded-xl p-6 h-full hover:border-[#3a3a3a] hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                      <div className="w-9 h-9 bg-[#F4F4F5] rounded-md flex items-center justify-center mb-4 group-hover:bg-[#1c1917] transition-colors duration-300">
+                        <ValueIcon size={17} className="text-[#3a3a3a]" />
+                      </div>
+                      <h4 className="font-display font-bold text-[#1c1917] mb-2">{v.label}</h4>
+                      <p className="text-[#71717a] text-sm leading-relaxed">{v.description || v.desc}</p>
+                    </div>
+                  </Reveal>
+                )
+              })}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
+
       <CTABanner />
     </div>
   )
