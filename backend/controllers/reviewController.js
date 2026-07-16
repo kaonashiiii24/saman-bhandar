@@ -84,3 +84,45 @@ exports.submitReview = async (req, res) => {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
+
+exports.getLatestReviews = async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT 
+        u.full_name AS customer_name,
+        u.role AS position,
+        rv.rating,
+        rv.comment AS review,
+        rv.created_at
+      FROM reviews rv
+      JOIN users u ON u.id = rv.reviewer_id
+      ORDER BY rv.created_at DESC
+    `);
+    return res.json({ success: true, data: rows });
+  } catch (err) {
+    console.error('Latest reviews error:', err);
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+exports.getTopTestimonials = async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT 
+        u.full_name AS customer_name,
+        u.role AS position,
+        rv.rating,
+        rv.comment AS review
+      FROM reviews rv
+      JOIN bookings b ON rv.booking_id = b.id
+      JOIN users u ON u.id = rv.reviewer_id
+      WHERE rv.rating = 5
+      ORDER BY rv.created_at DESC
+      LIMIT 3
+    `);
+    return res.json({ success: true, data: rows });
+  } catch (err) {
+    console.error('Top testimonials error:', err);
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};

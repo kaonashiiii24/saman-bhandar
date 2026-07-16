@@ -18,13 +18,9 @@ import * as Icons from 'lucide-react'
 import ConfirmDeleteDialog from './ConfirmDeleteDialog'
 import IconPicker from './IconPicker'
 
-function SortableItem({ item, onEdit, onDelete, onDuplicate, onToggle, showIcon }) {
+function SortableItem({ item, onEdit, onDelete, onDuplicate, onToggle, showIcon, allowDelete }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id })
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  }
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }
 
   const IconComponent = showIcon && item.icon ? Icons[item.icon] : null
 
@@ -52,9 +48,11 @@ function SortableItem({ item, onEdit, onDelete, onDuplicate, onToggle, showIcon 
         <button onClick={() => onEdit(item)} className="p-2 rounded-lg hover:bg-gray-100 text-gray-400" title="Edit">
           <Pencil size={16} />
         </button>
-        <button onClick={() => onDelete(item.id)} className="p-2 rounded-lg hover:bg-red-50 text-red-500" title="Delete">
-          <Trash2 size={16} />
-        </button>
+        {allowDelete !== false && (
+          <button onClick={() => onDelete(item.id)} className="p-2 rounded-lg hover:bg-red-50 text-red-500" title="Delete">
+            <Trash2 size={16} />
+          </button>
+        )}
       </div>
     </div>
   )
@@ -72,6 +70,7 @@ export default function DynamicListEditor({
   title,
   pageSize = 10,
   allowAdd = true,
+  allowDelete = true,
 }) {
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState({})
@@ -104,7 +103,8 @@ export default function DynamicListEditor({
   }
 
   const startEdit = (item) => {
-    setForm({ ...item })
+    const { title: _t, description: _d, ...cleanItem } = item
+    setForm(cleanItem)
     setEditing(item.id)
   }
 
@@ -114,8 +114,22 @@ export default function DynamicListEditor({
     e.preventDefault()
     const cleaned = {}
     fields.forEach(f => {
-      cleaned[f.key] = form[f.key] !== undefined ? form[f.key] : (f.type === 'number' ? 0 : '')
+      let val = form[f.key]
+      if (val === undefined) {
+        val = f.type === 'number' ? 0 : ''
+      }
+      if (f.type === 'number') {
+        const num = Number(val)
+        if (!isNaN(num)) {
+          if (f.min !== undefined && num < f.min) val = f.min
+          if (f.max !== undefined && num > f.max) val = f.max
+        }
+      }
+      cleaned[f.key] = val
     })
+    delete cleaned.title
+    delete cleaned.description
+
     if (editing === 'new') {
       onAdd(cleaned)
     } else {
@@ -143,8 +157,8 @@ export default function DynamicListEditor({
       </div>
 
       {items.length === 0 ? (
-        <div className="text-center py-16 text-gray-500 text-sm border border-dashed border-gray-200 rounded-xl">
-          No items yet. {allowAdd ? 'Click "Add New" to create one.' : ''}
+        <div className="text-center py-16 text-gray-500 border border-dashed border-gray-200 rounded-xl">
+          No items yet.
         </div>
       ) : (
         <>
@@ -160,6 +174,7 @@ export default function DynamicListEditor({
                     onDuplicate={onDuplicate ? () => onDuplicate(item) : undefined}
                     onToggle={onToggle}
                     showIcon={showIcon}
+                    allowDelete={allowDelete}
                   />
                 ))}
               </div>
@@ -168,31 +183,17 @@ export default function DynamicListEditor({
 
           {totalPages > 1 && (
             <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-              <p className="text-xs text-gray-500">
-                Page {currentPage} of {totalPages} ({items.length} items)
-              </p>
+              <p className="text-xs text-gray-500">Page {currentPage} of {totalPages} ({items.length} items)</p>
               <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-30"
-                >
+                <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-30">
                   <ChevronLeft size={16} />
                 </button>
                 {Array.from({ length: totalPages }, (_, i) => (
-                  <button
-                    key={i + 1}
-                    onClick={() => setCurrentPage(i + 1)}
-                    className={`w-7 h-7 text-xs font-medium rounded ${currentPage === i + 1 ? 'bg-gray-900 text-white' : 'hover:bg-gray-100 text-gray-600'}`}
-                  >
-                    {i + 1}
+                  <button key={i+1} onClick={() => setCurrentPage(i+1)} className={`w-7 h-7 text-xs font-medium rounded ${currentPage === i+1 ? 'bg-gray-900 text-white' : 'hover:bg-gray-100 text-gray-600'}`}>
+                    {i+1}
                   </button>
                 ))}
-                <button
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-30"
-                >
+                <button onClick={() => setCurrentPage(p => Math.min(totalPages, p+1))} disabled={currentPage === totalPages} className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-30">
                   <ChevronRight size={16} />
                 </button>
               </div>
@@ -205,9 +206,7 @@ export default function DynamicListEditor({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
           <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 animate-scale-in max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-lg font-bold text-gray-900">
-                {editing === 'new' ? `Add ${title}` : `Edit ${title}`}
-              </h3>
+              <h3 className="text-lg font-bold text-gray-900">{editing === 'new' ? `Add ${title}` : `Edit ${title}`}</h3>
               <button onClick={closeModal} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500"><X size={18} /></button>
             </div>
             <form onSubmit={handleSubmit} className="space-y-5">
@@ -232,8 +231,15 @@ export default function DynamicListEditor({
                 return (
                   <div key={field.key}>
                     <label className="block text-xs font-bold text-gray-700 mb-1.5">{field.label}</label>
-                    <input value={form[field.key] || ''} onChange={e => setForm(prev => ({ ...prev, [field.key]: e.target.value }))}
-                      type={field.type || 'text'} className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-gray-200" />
+                    <input
+                      value={form[field.key] || ''}
+                      onChange={e => setForm(prev => ({ ...prev, [field.key]: e.target.value }))}
+                      type={field.type || 'text'}
+                      min={field.min}
+                      max={field.max}
+                      step={field.step}
+                      className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-gray-200"
+                    />
                   </div>
                 )
               })}
@@ -250,11 +256,7 @@ export default function DynamicListEditor({
         </div>
       )}
 
-      <ConfirmDeleteDialog
-        open={!!deleteId}
-        onClose={() => setDeleteId(null)}
-        onConfirm={handleDelete}
-      />
+      <ConfirmDeleteDialog open={!!deleteId} onClose={() => setDeleteId(null)} onConfirm={handleDelete} />
     </div>
   )
 }

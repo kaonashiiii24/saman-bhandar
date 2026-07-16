@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
-import { Package, CalendarCheck, CreditCard, TrendingUp, ArrowRight, Clock, CheckCircle2, AlertCircle, Plus, Warehouse, BookOpen } from 'lucide-react'
+import { Package, CalendarCheck, CreditCard, TrendingUp, ArrowRight, Clock, CheckCircle2, AlertCircle, Plus, Warehouse, BookOpen, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import StatCard from '../../components/common/StatCard'
 import { useAuth } from '../../hooks/useAuth'
 import { getMyBookings } from '../../services/bookingService'
-import { getInventory } from '../../services/inventoryService'
+import { getInventory, createItem } from '../../services/inventoryService'
 import { getMyPayments } from '../../services/paymentService'
 
 function useInView(threshold = 0.1) {
@@ -35,6 +35,15 @@ export default function SellerDashboard() {
   const [loading, setLoading] = useState(true)
   const [headerRef, headerVisible] = useInView(0.1)
 
+  const [showAddItem, setShowAddItem] = useState(false)
+  const [addItemForm, setAddItemForm] = useState({
+    name: '',
+    category: '',
+    quantity: 1,
+    booking_id: ''
+  })
+  const [adding, setAdding] = useState(false)
+
   useEffect(() => {
     Promise.all([getMyBookings(), getInventory(), getMyPayments()])
       .then(([b, i, p]) => {
@@ -49,6 +58,31 @@ export default function SellerDashboard() {
   const totalSpent = payments.filter(p => p.status === 'completed').reduce((sum, p) => sum + Number(p.amount), 0)
   const activeBookings = bookings.filter(b => b.status === 'active').length
 
+  const handleAddItem = async (e) => {
+    e.preventDefault()
+    if (!addItemForm.name || addItemForm.quantity < 1) {
+      alert('Please enter a valid name and quantity')
+      return
+    }
+    setAdding(true)
+    try {
+      await createItem({
+        name: addItemForm.name,
+        category: addItemForm.category,
+        quantity: addItemForm.quantity,
+        booking_id: addItemForm.booking_id || null
+      })
+      setShowAddItem(false)
+      setAddItemForm({ name: '', category: '', quantity: 1, booking_id: '' })
+      const iRes = await getInventory()
+      setInventory(iRes?.data?.data?.items || iRes?.data?.items || [])
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to add item')
+    } finally {
+      setAdding(false)
+    }
+  }
+
   return (
     <div className="space-y-5 sm:space-y-6">
       <div ref={headerRef} className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all duration-500 ${headerVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
@@ -56,9 +90,17 @@ export default function SellerDashboard() {
           <h2 className="font-display font-black text-xl sm:text-2xl text-[#1c1917]">Hello {user?.full_name || 'Seller'}</h2>
           <p className="text-xs text-[#71717a] mt-1 hidden sm:block">Here's what's happening with your storage today.</p>
         </div>
-        <Link to="/listings" className="inline-flex items-center gap-2 bg-[#1c1917] hover:bg-brick text-white font-display font-bold px-4 py-2.5 rounded-lg transition-colors text-sm shrink-0 self-start sm:self-auto">
-          <Plus size={15} /> Find Storage
-        </Link>
+        <div className="flex gap-2 self-start sm:self-auto">
+          <button
+            onClick={() => setShowAddItem(true)}
+            className="inline-flex items-center gap-2 bg-[#1c1917] hover:bg-brick text-white font-display font-bold px-4 py-2.5 rounded-lg transition-colors text-sm shrink-0"
+          >
+            <Plus size={15} /> Add Item
+          </button>
+          <Link to="/listings" className="inline-flex items-center gap-2 border border-border bg-white hover:bg-chalk text-[#1c1917] font-display font-bold px-4 py-2.5 rounded-lg transition-colors text-sm shrink-0">
+            <Plus size={15} /> Find Storage
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -160,6 +202,60 @@ export default function SellerDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Add Item Modal */}
+      {showAddItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 animate-scale-in">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-display font-bold text-[#1c1917] text-lg">Add Inventory Item</h3>
+              <button onClick={() => setShowAddItem(false)} className="p-1.5 rounded-lg hover:bg-chalk text-[#71717a]"><X size={18} /></button>
+            </div>
+            <form onSubmit={handleAddItem} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-[#1c1917] mb-1.5">Item Name *</label>
+                <input type="text" placeholder="e.g. Handmade pottery" value={addItemForm.name}
+                  onChange={e => setAddItemForm({ ...addItemForm, name: e.target.value })}
+                  className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-chalk text-[#1c1917] placeholder-[#71717a] outline-none focus:border-[#1c1917] focus:bg-white transition-all" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-[#1c1917] mb-1.5">Category</label>
+                  <input type="text" placeholder="e.g. Crafts" value={addItemForm.category}
+                    onChange={e => setAddItemForm({ ...addItemForm, category: e.target.value })}
+                    className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-chalk text-[#1c1917] placeholder-[#71717a] outline-none focus:border-[#1c1917] focus:bg-white transition-all" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-[#1c1917] mb-1.5">Quantity *</label>
+                  <input type="number" min="1" value={addItemForm.quantity}
+                    onChange={e => setAddItemForm({ ...addItemForm, quantity: parseInt(e.target.value) || 0 })}
+                    className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-chalk text-[#1c1917] placeholder-[#71717a] outline-none focus:border-[#1c1917] focus:bg-white transition-all" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-[#1c1917] mb-1.5">Storage Space (optional)</label>
+                <select value={addItemForm.booking_id} onChange={e => setAddItemForm({ ...addItemForm, booking_id: e.target.value })}
+                  className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-chalk text-[#1c1917] outline-none focus:border-[#1c1917] focus:bg-white transition-all">
+                  <option value="">No specific space</option>
+                  {bookings.filter(b => b.status === 'active' || b.status === 'approved').map(b => (
+                    <option key={b.id} value={b.id}>{b.listing_title} — {b.listing_location}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button type="submit" disabled={adding}
+                  className="flex-1 bg-[#1c1917] hover:bg-brick text-white font-display font-bold py-2.5 rounded-lg text-sm transition-colors disabled:opacity-60">
+                  {adding ? 'Adding...' : 'Add Item'}
+                </button>
+                <button type="button" onClick={() => setShowAddItem(false)}
+                  className="px-4 py-2.5 border border-border text-[#71717a] font-semibold rounded-lg text-sm hover:bg-chalk transition-colors">
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

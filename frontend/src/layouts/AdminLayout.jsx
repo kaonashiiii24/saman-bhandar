@@ -75,17 +75,13 @@ export default function AdminLayout() {
         </div>
       </aside>
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <DashboardTopbar onMenuToggle={() => setMobileOpen(!mobileOpen)} mobileOpen={mobileOpen} title={title} />
-        <main className="flex-1 overflow-y-auto bg-chalk">
-          {isCmsRoute ? (
-            <div className="animate-fade-in">
-              <Outlet />
-            </div>
-          ) : (
-            <div className="p-4 sm:p-5 lg:p-6 max-w-7xl mx-auto animate-fade-in">
-              <Outlet />
-            </div>
-          )}
+        {!isCmsRoute && (
+          <DashboardTopbar onMenuToggle={() => setMobileOpen(!mobileOpen)} mobileOpen={mobileOpen} title={title} />
+        )}
+        <main className={`flex-1 overflow-y-auto bg-chalk ${!isCmsRoute ? 'p-4 sm:p-5 lg:p-6 max-w-7xl mx-auto' : ''}`}>
+          <div className={`${!isCmsRoute ? '' : 'animate-fade-in'}`}>
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

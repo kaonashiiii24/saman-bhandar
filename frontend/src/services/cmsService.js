@@ -53,3 +53,32 @@ export const getAboutValues = () => api.get('/admin/cms/about-values');
 export const createAboutValue = (data) => api.post('/admin/cms/about-values', data);
 export const updateAboutValue = (id, data) => api.put(`/admin/cms/about-values/${id}`, data);
 export const deleteAboutValue = (id) => api.delete(`/admin/cms/about-values/${id}`);
+
+export const getServicesPage = () => api.get('/admin/cms/services-page');
+export const updateServicesPage = (data) => api.put('/admin/cms/services-page', data);
+
+export const getServicesWhyStats = () => api.get('/admin/cms/services-why-stats');
+export const createServicesWhyStat = (data) => api.post('/admin/cms/services-why-stats', data);
+export const updateServicesWhyStat = (id, data) => api.put(`/admin/cms/services-why-stats/${id}`, data);
+export const deleteServicesWhyStat = (id) => api.delete(`/admin/cms/services-why-stats/${id}`);
+
+export const getPricingPlans = () => api.get('/admin/cms/pricing-plans');
+export const createPricingPlan = (data) => api.post('/admin/cms/pricing-plans', data);
+export const updatePricingPlan = (id, data) => api.put(`/admin/cms/pricing-plans/${id}`, data);
+export const deletePricingPlan = (id) => api.delete(`/admin/cms/pricing-plans/${id}`);
+
+export const getSectionHeadings = () => api.get('/admin/cms/section-headings');
+export const updateSectionHeadings = (data) => api.put('/admin/cms/section-headings', data);
+
+export const getRoleSteps = () => api.get('/admin/cms/role-steps');
+export const createRoleStep = (data) => api.post('/admin/cms/role-steps', data);
+export const updateRoleStep = (id, data) => api.put(`/admin/cms/role-steps/${id}`, data);
+export const deleteRoleStep = (id) => api.delete(`/admin/cms/role-steps/${id}`);
+
+export const getBrowsePage = () => api.get('/admin/cms/browse-page');
+export const updateBrowsePage = (data) => api.put('/admin/cms/browse-page', data);
+
+export const getNavigation = () => api.get('/admin/cms/navigation');
+export const updateNavigation = (data) => api.put('/admin/cms/navigation', data, {
+  headers: { 'Content-Type': 'multipart/form-data' }
+});

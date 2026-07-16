@@ -6,6 +6,7 @@ import { useAuth } from '../../hooks/useAuth'
 import useDebounce from '../../hooks/useDebounce'
 import usePagination from '../../hooks/usePagination'
 import Pagination from '../../components/common/Pagination'
+import useCms from '../../hooks/useCms'
 
 const PAGE_SIZE = 9
 
@@ -264,6 +265,9 @@ export default function BrowseListings() {
   const [scrollY, setScrollY] = useState(0)
   const listingsRef = useRef(null)
 
+  const { cms } = useCms()
+  const browse = cms?.browsePage || {}
+
   const debouncedSearch = useDebounce(searchInput, 400)
 
   useEffect(() => {
@@ -315,7 +319,7 @@ export default function BrowseListings() {
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat will-change-transform scale-105"
           style={{ 
-            backgroundImage: "url('/images/browse-hero.jpg')",
+            backgroundImage: browse.hero_image ? `url('${browse.hero_image}')` : "url('/images/browse-hero.jpg')",
             transform: `translateY(${scrollY * 0.12}px)`
           }}
         />
@@ -329,20 +333,20 @@ export default function BrowseListings() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-neutral-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-neutral-300" />
               </span>
-              Find Storage
+              {browse.hero_badge || 'Find Storage'}
             </div>
             <h1 className={`font-display font-black text-4xl sm:text-6xl lg:text-7xl text-white tracking-tight leading-[1.05] mb-5 transition-all duration-700 delay-300 ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
-              Storage near you.
+              {browse.hero_title || 'Storage near you.'}
             </h1>
             <p className={`text-neutral-300/80 text-base sm:text-lg leading-relaxed mb-8 max-w-lg transition-all duration-700 delay-500 ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
-              Verified spaces across Nepal — book by the day, week or month.
+              {browse.hero_description || 'Verified spaces across Nepal — book by the day, week or month.'}
             </p>
             <div className={`flex flex-wrap gap-3 transition-all duration-700 delay-700 ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
               <button
                 onClick={scrollToListings}
                 className="inline-flex items-center gap-2 bg-white hover:bg-neutral-100 text-neutral-900 font-display font-bold px-6 py-3.5 rounded-xl transition-all shadow-xl hover:shadow-2xl hover:-translate-y-0.5 active:translate-y-0 text-sm"
               >
-                Start Booking <ArrowRight size={16} />
+                {browse.cta_text || 'Start Booking'} <ArrowRight size={16} />
               </button>
             </div>
           </div>

@@ -6,7 +6,6 @@ exports.getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id)
     if (!user) return error(res, 'User not found', 404)
-    // Remove sensitive data
     const { password, ...safeUser } = user
     return success(res, safeUser, 'Profile fetched')
   } catch (err) {

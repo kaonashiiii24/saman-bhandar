@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Package, Search, Trash2, AlertTriangle, X, Truck, ArrowDown, ArrowUp, Lock } from 'lucide-react'
-import { getInventory, deleteItem, createDeliveryRequest } from '../../services/inventoryService'
+import { Package, Search, Trash2, AlertTriangle, X, Truck, ArrowDown, ArrowUp, Lock, Plus } from 'lucide-react'
+import { getInventory, deleteItem, createDeliveryRequest, createItem } from '../../services/inventoryService'
 import { getMyBookings } from '../../services/bookingService'
 import Loader from '../../components/common/Loader'
 import AlertMessage from '../../components/common/AlertMessage'
@@ -13,6 +13,15 @@ export default function Inventory() {
   const [success, setSuccess] = useState('')
   const [search, setSearch] = useState('')
   const [showDeliveryForm, setShowDeliveryForm] = useState(false)
+  const [showAddItemForm, setShowAddItemForm] = useState(false)
+  const [addItemForm, setAddItemForm] = useState({
+    name: '',
+    category: '',
+    quantity: 1,
+    booking_id: ''
+  })
+  const [adding, setAdding] = useState(false)
+
   const [deliveryType, setDeliveryType] = useState('pickup')
   const [deliveryForm, setDeliveryForm] = useState({
     booking_id: '',
@@ -40,6 +49,31 @@ export default function Inventory() {
       await deleteItem(id)
       setItems(items.filter(i => i.id !== id))
     } catch { setError('Failed to delete item') }
+  }
+
+  const handleAddItem = async (e) => {
+    e.preventDefault()
+    if (!addItemForm.name || addItemForm.quantity < 1) {
+      setError('Please fill name and a valid quantity')
+      return
+    }
+    setAdding(true)
+    try {
+      await createItem({
+        name: addItemForm.name,
+        category: addItemForm.category,
+        quantity: addItemForm.quantity,
+        booking_id: addItemForm.booking_id || null
+      })
+      setSuccess('Item added successfully')
+      setShowAddItemForm(false)
+      setAddItemForm({ name: '', category: '', quantity: 1, booking_id: '' })
+      fetchData()
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to add item')
+    } finally {
+      setAdding(false)
+    }
   }
 
   const handleDeliverySubmit = async () => {
@@ -134,13 +168,72 @@ export default function Inventory() {
             className="w-full pl-9 pr-4 py-2.5 text-sm border border-border rounded-lg bg-white text-[#1c1917] placeholder-[#71717a] outline-none focus:border-[#1c1917] focus:ring-2 focus:ring-[#1c1917]/6 transition-all" />
         </div>
         <div className="flex gap-2">
-          <button onClick={() => setShowDeliveryForm(!showDeliveryForm)}
+          <button onClick={() => { setShowAddItemForm(true); setShowDeliveryForm(false) }}
+            className="inline-flex items-center justify-center gap-2 bg-[#1c1917] hover:bg-brick text-white font-display font-bold px-4 py-2.5 rounded-lg transition-colors text-sm shrink-0">
+            <Plus size={15} /> Add Item
+          </button>
+          <button onClick={() => { setShowDeliveryForm(!showDeliveryForm); setShowAddItemForm(false) }}
             className="inline-flex items-center justify-center gap-2 bg-brick hover:bg-brick-dark text-white font-display font-bold px-4 py-2.5 rounded-lg transition-colors text-sm shrink-0">
             {showDeliveryForm ? <><X size={15} /> Cancel</> : <><Truck size={15} /> Request Delivery</>}
           </button>
         </div>
       </div>
 
+      {/* Add Item Modal */}
+      {showAddItemForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 animate-scale-in">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-display font-bold text-[#1c1917] text-lg">Add New Item</h3>
+              <button onClick={() => setShowAddItemForm(false)} className="p-1.5 rounded-lg hover:bg-chalk text-[#71717a]"><X size={18} /></button>
+            </div>
+            <form onSubmit={handleAddItem} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-[#1c1917] mb-1.5">Item Name *</label>
+                <input type="text" placeholder="e.g. Handmade pottery" value={addItemForm.name}
+                  onChange={e => setAddItemForm({ ...addItemForm, name: e.target.value })}
+                  className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-chalk text-[#1c1917] placeholder-[#71717a] outline-none focus:border-[#1c1917] focus:bg-white transition-all" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-[#1c1917] mb-1.5">Category</label>
+                  <input type="text" placeholder="e.g. Crafts" value={addItemForm.category}
+                    onChange={e => setAddItemForm({ ...addItemForm, category: e.target.value })}
+                    className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-chalk text-[#1c1917] placeholder-[#71717a] outline-none focus:border-[#1c1917] focus:bg-white transition-all" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-[#1c1917] mb-1.5">Quantity *</label>
+                  <input type="number" min="1" value={addItemForm.quantity}
+                    onChange={e => setAddItemForm({ ...addItemForm, quantity: parseInt(e.target.value) || 0 })}
+                    className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-chalk text-[#1c1917] placeholder-[#71717a] outline-none focus:border-[#1c1917] focus:bg-white transition-all" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-[#1c1917] mb-1.5">Storage Space (optional)</label>
+                <select value={addItemForm.booking_id} onChange={e => setAddItemForm({ ...addItemForm, booking_id: e.target.value })}
+                  className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-chalk text-[#1c1917] outline-none focus:border-[#1c1917] focus:bg-white transition-all">
+                  <option value="">No specific space</option>
+                  {bookings.filter(b => b.status === 'active' || b.status === 'approved').map(b => (
+                    <option key={b.id} value={b.id}>{b.listing_title} — {b.listing_location}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button type="submit" disabled={adding}
+                  className="flex-1 bg-[#1c1917] hover:bg-brick text-white font-display font-bold py-2.5 rounded-lg text-sm transition-colors disabled:opacity-60">
+                  {adding ? 'Adding...' : 'Add Item'}
+                </button>
+                <button type="button" onClick={() => setShowAddItemForm(false)}
+                  className="px-4 py-2.5 border border-border text-[#71717a] font-semibold rounded-lg text-sm hover:bg-chalk transition-colors">
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delivery Request Form (unchanged) */}
       {showDeliveryForm && (
         <div className="bg-white border border-border rounded-xl p-4 sm:p-5 animate-fade-in-up">
           <h3 className="font-display font-bold text-[#1c1917] mb-4 text-sm">New Delivery Request</h3>
@@ -293,7 +386,7 @@ export default function Inventory() {
           <div className="p-10 sm:p-14 text-center">
             <Package size={32} className="text-border mx-auto mb-3" />
             <p className="font-display font-bold text-[#1c1917] text-sm mb-1">No items yet</p>
-            <p className="text-[#71717a] text-xs">Create a Dropoff to Storage delivery to add items.</p>
+            <p className="text-[#71717a] text-xs">Add your first item using the button above.</p>
           </div>
         ) : (
           <>

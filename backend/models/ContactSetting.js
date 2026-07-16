@@ -4,12 +4,23 @@ const createTable = async () => {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS contact_settings (
       id INT AUTO_INCREMENT PRIMARY KEY,
+      hero_badge VARCHAR(255),
+      hero_title VARCHAR(255),
+      hero_title_line2 VARCHAR(255),
+      hero_description TEXT,
       heading VARCHAR(255),
       description TEXT,
-      address TEXT,
-      phone VARCHAR(50),
+      office_heading VARCHAR(255),
+      office_address VARCHAR(255),
       email VARCHAR(255),
+      email_sub VARCHAR(100),
+      phone VARCHAR(50),
+      phone_sub VARCHAR(100),
+      address TEXT,
+      address_sub VARCHAR(100),
       map_url TEXT,
+      hours VARCHAR(50),
+      hours_sub VARCHAR(50),
       social_media_links JSON,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )

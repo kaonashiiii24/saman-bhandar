@@ -19,12 +19,12 @@ const getAllPayments = async (req, res) => {
 const verifySimulatedPayment = async (req, res) => {
   try {
     const { bookingId, txn, method } = req.body;
-    
+
     if (!bookingId) return error(res, 'Missing booking ID', 400);
-    
+
     const booking = await Booking.findById(bookingId);
     if (!booking) return error(res, 'Booking not found', 404);
-    
+
     await Payment.create({
       booking_id: bookingId,
       seller_id: booking.seller_id,
@@ -33,9 +33,9 @@ const verifySimulatedPayment = async (req, res) => {
       transaction_id: txn || `TXN-${Date.now()}`,
       status: 'completed'
     });
-    
+
     await Booking.updateStatus(bookingId, 'active');
-    
+
     return success(res, {}, 'Payment verified and booking activated');
   } catch (err) { return error(res, err.message); }
 };

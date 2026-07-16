@@ -9,16 +9,13 @@ export default function useAutoSave(data, saveFn, delay = 3000) {
   useEffect(() => {
     if (!data) return
 
-    // Skip if data is the same object reference (no actual edit)
     if (data === previousData.current) return
 
-    // If the previous data was null (initial load), skip marking as unsaved
     if (previousData.current === null) {
       previousData.current = data
       return
     }
 
-    // Real change detected → mark unsaved and schedule save
     previousData.current = data
     setSaveStatus('unsaved')
     clearTimeout(timeout.current)

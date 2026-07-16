@@ -48,11 +48,16 @@ import TestimonialsManager from '../pages/admin/cms/TestimonialsManager'
 import FaqManager from '../pages/admin/cms/FaqManager'
 import ContactManager from '../pages/admin/cms/ContactManager'
 import FooterManager from '../pages/admin/cms/FooterManager'
-import SeoManager from '../pages/admin/cms/SeoManager'
-import ThemeManager from '../pages/admin/cms/ThemeManager'
-import MediaManager from '../pages/admin/cms/MediaManager'
 import AdminProfile from '../pages/admin/Profile'
 import { ToastProvider } from '../context/ToastContext'
+import PricingPlansManager from '../pages/admin/cms/PricingPlansManager'
+import SectionHeadingsManager from '../pages/admin/cms/SectionHeadingsManager'
+import RoleStepsManager from '../pages/admin/cms/RoleStepsManager'
+import ServicesHeroManager from '../pages/admin/cms/ServicesHeroManager'
+import BrowseHeroManager from '../pages/admin/cms/BrowseHeroManager'
+import AboutHeroManager from '../pages/admin/cms/AboutHeroManager'
+import AboutValuesManager from '../pages/admin/cms/AboutValuesManager'
+import NavigationManager from '../pages/admin/cms/NavigationManager'
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useAuth()
@@ -78,6 +83,7 @@ export default function AppRoutes() {
         <Route path="/services" element={<Services />} />
         <Route path="/about" element={<AboutUs />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/payment/simulate" element={<PaymentSimulate />} />
         <Route path="/payment-simulate" element={<PaymentSimulate />} />
       </Route>
 
@@ -128,9 +134,16 @@ export default function AppRoutes() {
           <Route path="faqs" element={<FaqManager />} />
           <Route path="contact" element={<ContactManager />} />
           <Route path="footer" element={<FooterManager />} />
-          <Route path="seo" element={<SeoManager />} />
-          <Route path="theme" element={<ThemeManager />} />
-          <Route path="media" element={<MediaManager />} />
+          <Route path="section-headings" element={<SectionHeadingsManager />} />
+          <Route path="pricing-plans" element={<PricingPlansManager />} />
+<Route path="role-steps" element={<RoleStepsManager />} />
+<Route path="services-hero" element={<ServicesHeroManager />} />
+<Route path="browse-hero" element={<BrowseHeroManager />} />
+<Route path="about-hero" element={<AboutHeroManager />} />
+<Route path="about-values" element={<AboutValuesManager />} />
+<Route path="navigation" element={<NavigationManager />} />
+
+
         </Route>
       </Route>
 

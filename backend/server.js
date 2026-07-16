@@ -25,6 +25,9 @@ const FooterSetting = require('./models/FooterSetting');
 const ThemeSetting = require('./models/ThemeSetting');
 const Media = require('./models/Media');
 const AboutValue = require('./models/AboutValue');
+const ServicesWhyStat = require('./models/ServicesWhyStat');
+const PricingPlan = require('./models/PricingPlan');
+const RoleStep = require('./models/RoleStep');
 
 const server = http.createServer(app);
 
@@ -61,6 +64,9 @@ const initDB = async () => {
   await ThemeSetting.createTable();
   await Media.createTable();
   await AboutValue.createTable();
+  await ServicesWhyStat.createTable();
+  await PricingPlan.createTable();
+  await RoleStep.createTable();
 };
 
 initDB()

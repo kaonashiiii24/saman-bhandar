@@ -8,15 +8,14 @@ import { useToast } from '../../../context/ToastContext'
 const fields = [
   { key: 'title', label: 'Title', type: 'text' },
   { key: 'description', label: 'Description', type: 'textarea' },
-  { key: 'icon', label: 'Icon', type: 'icon' },
   { key: 'step_order', label: 'Order', type: 'number' },
 ]
 
-const fallback = [
-  { title: 'Find a space', description: 'Search by your area. See pricing and host details before you book.', icon: 'Search', step_order: 1 },
-  { title: 'Move your stock in', description: 'Book the space, coordinate with the host, move in on your schedule.', icon: 'Package', step_order: 2 },
-  { title: 'Manage from your phone', description: 'Track stock, chat with your host and request pickups. All in one place.', icon: 'Smartphone', step_order: 3 },
-  { title: 'Scale without stress', description: 'When orders grow, book more space. No lease, no deposit, no commitment.', icon: 'TrendingUp', step_order: 4 },
+const fallbackSteps = [
+  { title: 'Find a space', description: 'Search by your area. See pricing and host details before you book.', step_order: 1 },
+  { title: 'Move your stock in', description: 'Book the space, coordinate with the host, move in on your schedule.', step_order: 2 },
+  { title: 'Manage from your phone', description: 'Track stock, chat with your host and request pickups. All in one place.', step_order: 3 },
+  { title: 'Scale without stress', description: 'When orders grow, book more space. No lease, no deposit, no commitment.', step_order: 4 },
 ]
 
 export default function HowItWorksManager() {
@@ -24,11 +23,11 @@ export default function HowItWorksManager() {
   const [loading, setLoading] = useState(true)
   const addToast = useToast()
 
-  const seedIfEmpty = async () => {
+  const fetch = async () => {
     try {
       const res = await getHowItWorks()
       if (res.data.data.length === 0) {
-        for (const item of fallback) {
+        for (const item of fallbackSteps) {
           await createHowItWorks(item).catch(() => {})
         }
         const newRes = await getHowItWorks()
@@ -40,15 +39,15 @@ export default function HowItWorksManager() {
     finally { setLoading(false) }
   }
 
-  useEffect(() => { seedIfEmpty() }, [])
+  useEffect(() => { fetch() }, [])
 
   const handleUpdate = async (id, data) => {
-    try { await updateHowItWorks(id, data); addToast('Step updated', 'success'); setItems(prev => prev.map(i => i.id === id ? { ...i, ...data } : i)) }
+    try { await updateHowItWorks(id, data); addToast('Step updated', 'success'); fetch() }
     catch { addToast('Failed to update step', 'error') }
   }
 
   const handleDelete = async (id) => {
-    try { await deleteHowItWorks(id); addToast('Step deleted', 'success'); setItems(prev => prev.filter(i => i.id !== id)) }
+    try { await deleteHowItWorks(id); addToast('Step deleted', 'success'); fetch() }
     catch { addToast('Failed to delete step', 'error') }
   }
 
@@ -60,14 +59,30 @@ export default function HowItWorksManager() {
     } catch { addToast('Reorder failed', 'error') }
   }
 
+  const handleSave = async () => {
+    await fetch()
+    addToast('Steps refreshed', 'success')
+  }
+
+  const handleReset = async () => {
+    if (!window.confirm('Delete ALL steps? This cannot be undone.')) return
+    try {
+      await Promise.all(items.map(i => deleteHowItWorks(i.id)))
+      addToast('All steps deleted', 'success')
+      fetch()
+    } catch { addToast('Failed to reset', 'error') }
+  }
+
   if (loading) return <Loader />
 
   return (
     <>
       <StickyToolbar
         title="How It Works"
-        description="The four steps shown on the homepage. You can edit or reorder them, but not add new steps."
+        description="Edit the four steps shown on the homepage. No new steps can be added."
+        onSave={handleSave}
         onPreview={() => window.open('/?preview=howitworks', '_blank')}
+        onReset={items.length > 0 ? handleReset : undefined}
       />
       <div className="p-6">
         <DynamicListEditor

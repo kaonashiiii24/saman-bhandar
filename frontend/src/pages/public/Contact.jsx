@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react'
-import { Link } from 'react-router-dom'
 import { Mail, Phone, MapPin, Clock, Send, CheckCircle2, ArrowRight } from 'lucide-react'
 import CTABanner from '../../components/common/CTABanner'
 import useCms from '../../hooks/useCms'
@@ -62,10 +61,6 @@ export default function Contact() {
   }
 
   const contact = cms?.contact || {}
-  const socialLinks = contact.social_media_links || contact.social_links || [
-    { platform: 'facebook', url: '#' },
-    { platform: 'instagram', url: '#' },
-  ]
 
   const info = [
     { icon: Mail, label: 'Email', value: contact.email || 'hello@samanbhandar.com', sub: contact.email_sub || 'Reply within 24 hours' },
@@ -74,15 +69,17 @@ export default function Contact() {
     { icon: Clock, label: 'Hours', value: contact.hours || 'Mon – Fri', sub: contact.hours_sub || '9:00 AM – 6:00 PM NPT' },
   ]
 
-  const quickFaqs = contact.quick_faqs || [
-    { question: 'How quickly do you respond?', answer: 'We aim to respond within 24 hours on working days.' },
-    { question: 'Can I visit your office?', answer: 'Yes — Mon to Fri, 9am to 6pm. No appointment needed.' },
-    { question: 'Do you offer partnerships?', answer: 'Yes. Email partnerships@samanbhandar.com to get started.' },
-  ]
+  const socialLinks = (() => {
+    const links = contact.social_media_links;
+    if (Array.isArray(links)) return links.length > 0 ? links : [{ platform: 'facebook', url: '#' }, { platform: 'instagram', url: '#' }];
+    if (typeof links === 'string') {
+      try { return JSON.parse(links); } catch { return [{ platform: 'facebook', url: '#' }, { platform: 'instagram', url: '#' }]; }
+    }
+    return [{ platform: 'facebook', url: '#' }, { platform: 'instagram', url: '#' }];
+  })();
 
   return (
     <div className="bg-[#FAFAF9] overflow-x-hidden">
-
       <section className="relative min-h-screen flex items-center overflow-hidden">
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat will-change-transform"
@@ -147,8 +144,8 @@ export default function Contact() {
           <div className="grid lg:grid-cols-2 gap-12 items-start">
             <Reveal direction="left">
               <div className="bg-white border border-border rounded-xl p-8 hover:shadow-lg transition-shadow duration-300">
-                <h2 className="font-display font-black text-2xl text-[#1c1917] tracking-tight mb-1">{contact.heading || 'Send a message'}</h2>
-                <p className="text-[#71717a] text-sm mb-6">{contact.description || "We'll get back to you within 24 hours."}</p>
+                <h2 className="font-display font-black text-2xl text-[#1c1917] tracking-tight mb-1">{contact.heading || 'Send us a message'}</h2>
+                <p className="text-[#71717a] text-sm mb-6">{contact.description || "Fill out the form and our team will get back to you within one business day."}</p>
                 {sent ? (
                   <div className="flex flex-col items-center py-12 text-center animate-fade-in">
                     <div className="w-14 h-14 bg-[#F4F4F5] rounded-xl flex items-center justify-center mb-4 animate-bounce-in">
@@ -228,17 +225,20 @@ export default function Contact() {
                   </div>
                 </div>
 
-                <div className="bg-white border border-border rounded-xl p-6 hover:shadow-lg transition-shadow duration-300">
-                  <h3 className="font-display font-bold text-[#1c1917] mb-4">Quick answers</h3>
-                  <div className="space-y-4">
-                    {quickFaqs.map((faq, i) => (
-                      <div key={i} className="border-b border-border pb-4 last:border-0 last:pb-0">
-                        <p className="text-sm font-bold text-[#1c1917] mb-1">{faq.question}</p>
-                        <p className="text-xs text-[#71717a] leading-relaxed">{faq.answer}</p>
-                      </div>
-                    ))}
+                {contact.map_url && (
+                  <div className="bg-white border border-border rounded-xl overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                    <iframe
+                      src={contact.map_url}
+                      width="100%"
+                      height="250"
+                      style={{ border: 0 }}
+                      allowFullScreen=""
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      title="Office Location"
+                    />
                   </div>
-                </div>
+                )}
               </div>
             </Reveal>
           </div>

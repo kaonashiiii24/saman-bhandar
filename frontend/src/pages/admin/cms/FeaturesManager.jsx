@@ -26,7 +26,7 @@ export default function FeaturesManager() {
   const [loading, setLoading] = useState(true)
   const addToast = useToast()
 
-  const seedIfEmpty = async () => {
+  const fetch = async () => {
     try {
       const res = await getFeatures()
       if (res.data.data.length === 0) {
@@ -42,20 +42,20 @@ export default function FeaturesManager() {
     finally { setLoading(false) }
   }
 
-  useEffect(() => { seedIfEmpty() }, [])
+  useEffect(() => { fetch() }, [])
 
   const handleAdd = async (data) => {
-    try { await createFeature(data); addToast('Feature added', 'success'); seedIfEmpty() }
+    try { await createFeature(data); addToast('Feature added', 'success'); fetch() }
     catch { addToast('Failed to add feature', 'error') }
   }
 
   const handleUpdate = async (id, data) => {
-    try { await updateFeature(id, data); addToast('Feature updated', 'success'); setItems(prev => prev.map(i => i.id === id ? { ...i, ...data } : i)) }
+    try { await updateFeature(id, data); addToast('Feature updated', 'success'); fetch() }
     catch { addToast('Failed to update feature', 'error') }
   }
 
   const handleDelete = async (id) => {
-    try { await deleteFeature(id); addToast('Feature deleted', 'success'); setItems(prev => prev.filter(i => i.id !== id)) }
+    try { await deleteFeature(id); addToast('Feature deleted', 'success'); fetch() }
     catch { addToast('Failed to delete feature', 'error') }
   }
 
@@ -67,12 +67,17 @@ export default function FeaturesManager() {
     } catch { addToast('Reorder failed', 'error') }
   }
 
+  const handleSave = async () => {
+    await fetch()
+    addToast('Features refreshed', 'success')
+  }
+
   const handleReset = async () => {
     if (!window.confirm('Delete ALL features? This cannot be undone.')) return
     try {
       await Promise.all(items.map(i => deleteFeature(i.id)))
-      addToast('Reset complete', 'success')
-      seedIfEmpty()
+      addToast('All features deleted', 'success')
+      fetch()
     } catch { addToast('Failed to reset', 'error') }
   }
 
@@ -83,6 +88,7 @@ export default function FeaturesManager() {
       <StickyToolbar
         title="Features"
         description="Feature cards shown on the homepage."
+        onSave={handleSave}
         onPreview={() => window.open('/?preview=features', '_blank')}
         onReset={items.length > 0 ? handleReset : undefined}
       />

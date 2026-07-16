@@ -6,6 +6,10 @@ const createTable = async () => {
       id INT AUTO_INCREMENT PRIMARY KEY,
       description TEXT,
       copyright_text VARCHAR(255),
+      tagline VARCHAR(255),
+      platform_links JSON,
+      company_links JSON,
+      legal_links JSON,
       quick_links JSON,
       social_links JSON,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP

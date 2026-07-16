@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, Users, Building2, MapPin, Star, CheckCircle } from 'lucide-react'
+import { ArrowRight, Users, MapPin, Star, CheckCircle } from 'lucide-react'
 import * as Icons from 'lucide-react'
 import CTABanner from '../../components/common/CTABanner'
 import api from '../../services/api'
@@ -52,23 +52,8 @@ export default function AboutUs() {
   const about = cms?.about || {}
   const values = cms?.aboutValues || []
 
-  const statsLabels = about.stats_labels || [
-    { key: 'total_sellers', label: 'Active sellers', sub: 'across Nepal' },
-    { key: 'total_hosts', label: 'Verified hosts', sub: 'manually checked' },
-    { key: 'total_cities', label: 'Locations covered', sub: 'and growing' },
-    { key: 'rating', label: 'Average rating', sub: 'from reviews', static_value: '4.8★' },
-  ]
-
-  const statsData = {
-    total_sellers: `${publicStats?.total_sellers || 0}+`,
-    total_hosts: `${publicStats?.total_hosts || 0}+`,
-    total_cities: `${publicStats?.total_cities || 0}+`,
-    rating: '4.8★',
-  }
-
   return (
     <div className="bg-[#FAFAF9] overflow-x-hidden">
-
       <section className="relative min-h-screen flex items-center overflow-hidden">
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat will-change-transform"
@@ -106,11 +91,21 @@ export default function AboutUs() {
       <section className="py-8 bg-white border-b border-border">
         <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-            {statsLabels.map((stat, i) => (
+            {[
+              { key: 'total_sellers', label: 'Active sellers', sub: 'across Nepal' },
+              { key: 'total_hosts', label: 'Verified hosts', sub: 'manually checked' },
+              { key: 'total_cities', label: 'Locations covered', sub: 'and growing' },
+              { key: 'rating', label: 'Average rating', sub: 'from reviews', static_value: '4.8★' },
+            ].map((stat, i) => (
               <Reveal key={i} delay={i * 100}>
                 <div className="text-center lg:text-left group cursor-default">
                   <p className="font-display font-black text-3xl text-[#1c1917] group-hover:text-brick transition-colors duration-300">
-                    {stat.static_value || statsData[stat.key] || 0}
+                    {stat.static_value || (
+                      stat.key === 'total_sellers' ? `${publicStats?.total_sellers || 0}+` :
+                      stat.key === 'total_hosts' ? `${publicStats?.total_hosts || 0}+` :
+                      stat.key === 'total_cities' ? `${publicStats?.total_cities || 0}+` :
+                      '4.8★'
+                    )}
                   </p>
                   <p className="text-sm font-semibold text-[#3a3a3a] mt-0.5">{stat.label}</p>
                   <p className="text-xs text-[#71717a] mt-0.5">{stat.sub}</p>
@@ -128,11 +123,16 @@ export default function AboutUs() {
               <p className="text-xs font-bold text-brick uppercase tracking-widest mb-4">{about.story_badge || 'Why we built this'}</p>
               <h2 className="font-display font-black text-4xl text-[#1c1917] tracking-tight mb-6 leading-tight">{about.story_title || 'The problem we saw and decided to fix.'}</h2>
               <div className="space-y-4 text-[#71717a] text-sm leading-relaxed">
-                {(about.story_paragraphs || [
-                  "In early 2025, our founders noticed that thousands of sellers running Instagram and Facebook shops in Nepal were storing products in their bedrooms, hallways and living rooms, which limited their ability to grow.",
-                  "At the same time, thousands of Nepalis had unused rooms, garages and godowns sitting empty. We saw an opportunity to connect these two groups and create real value for both sides.",
-                  "SamanBhandar launched in mid 2025 as Nepal's first peer to peer micro warehouse marketplace. Within months, hundreds of sellers were storing products with verified hosts across the Pokhara Valley.",
-                ]).map((p, idx) => <p key={idx}>{p}</p>)}
+                {(() => {
+                  const paragraphs = about.story_paragraphs;
+                  if (!paragraphs) return null;
+                  const list = Array.isArray(paragraphs)
+                    ? paragraphs
+                    : typeof paragraphs === 'string'
+                      ? paragraphs.split('\n').filter(line => line.trim() !== '')
+                      : [];
+                  return list.map((p, idx) => <p key={idx}>{p}</p>);
+                })()}
               </div>
               <Link to="/register" className="inline-flex items-center gap-2 mt-8 bg-[#1c1917] hover:bg-brick text-white font-display font-bold px-6 py-3.5 rounded-md transition-all duration-300 text-sm hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0">
                 Join us today <ArrowRight size={16} />

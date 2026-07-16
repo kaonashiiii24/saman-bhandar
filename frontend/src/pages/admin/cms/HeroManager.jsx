@@ -9,25 +9,41 @@ import useAutoSave from '../../../hooks/useAutoSave'
 import { useToast } from '../../../context/ToastContext'
 
 const DEFAULT_HERO = {
-  badge: '', title: '', title_highlight: '', description: '',
-  cta_primary_text: '', cta_primary_link: '', cta_secondary_text: '', cta_secondary_link: '',
-  hero_bg: '', stat1_number: '', stat1_label: '', stat2_number: '', stat2_label: '', stat3_number: '', stat3_label: '',
+  badge: '',
+  title: '',
+  title_highlight: '',
+  description: '',
+  cta_primary_text: '',
+  cta_primary_link: '',
+  cta_secondary_text: '',
+  cta_secondary_link: '',
+  hero_bg: '',
+  stat1_label: '',
+  stat2_label: '',
+  stat3_label: '',
+  dashboard_title: '',
+  dashboard_subtitle: '',
+  floating_card_1_title: '',
+  floating_card_1_subtitle: '',
+  floating_card_2_title: '',
+  floating_card_2_subtitle: '',
 }
 
 export default function HeroManager() {
-  const [hero, setHero] = useState(null)
+  const [hero, setHero] = useState(DEFAULT_HERO)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [undoStack, setUndoStack] = useState([])
   const [redoStack, setRedoStack] = useState([])
+
   const startSnapshot = useRef(null)
   const debounceTimer = useRef(null)
   const addToast = useToast()
 
   useEffect(() => {
     getHero()
-      .then(res => setHero(res.data.data || {}))
-      .catch(() => { setError('Failed to load hero data'); addToast('Failed to load hero data', 'error') })
+      .then(res => setHero(res.data.data || DEFAULT_HERO))
+      .catch(() => addToast('Failed to load hero data', 'error'))
       .finally(() => setLoading(false))
   }, [])
 
@@ -69,7 +85,7 @@ export default function HeroManager() {
   }
 
   const handleReset = () => {
-    if (window.confirm('Reset all hero fields to their original defaults? This can be undone.')) {
+    if (window.confirm('Reset all hero fields to empty? This can be undone.')) {
       pushUndo(hero)
       setHero(DEFAULT_HERO)
       addToast('Reset complete', 'success')
@@ -80,20 +96,32 @@ export default function HeroManager() {
     const formData = new FormData()
     formData.append('hero_bg', file)
     updateHero(formData)
-      .then(() => { getHero().then(res => setHero(res.data.data || {})); addToast('Image updated', 'success') })
+      .then(() => { getHero().then(res => setHero(res.data.data || DEFAULT_HERO)); addToast('Image updated', 'success') })
       .catch(() => addToast('Image upload failed', 'error'))
   }
 
   const handleImageRemove = () => handleFieldChange('hero_bg', '')
 
-  if (loading) return <div className="p-8 space-y-6 animate-pulse"><div className="h-8 w-48 bg-gray-200 rounded" /><div className="h-40 bg-gray-200 rounded-xl" /><div className="h-40 bg-gray-200 rounded-xl" /></div>
-  if (error) return <div className="p-8 text-center"><p className="text-red-500 mb-4">{error}</p><button onClick={() => window.location.reload()} className="text-sm font-semibold text-gray-900 underline">Try Again</button></div>
+  if (loading) return (
+    <div className="p-8 space-y-6 animate-pulse">
+      <div className="h-8 w-48 bg-gray-200 rounded" />
+      <div className="h-40 bg-gray-200 rounded-xl" />
+      <div className="h-40 bg-gray-200 rounded-xl" />
+    </div>
+  )
+
+  if (error) return (
+    <div className="p-8 text-center">
+      <p className="text-red-500 mb-4">{error}</p>
+      <button onClick={() => window.location.reload()} className="text-sm font-semibold text-gray-900 underline">Try Again</button>
+    </div>
+  )
 
   return (
     <>
       <StickyToolbar
         title="Hero Section"
-        description="Manage the main headline, buttons, background image, and statistics."
+        description="Manage headline, dashboard mockup, and floating cards."
         onSave={triggerSave}
         onPreview={() => window.open('/?preview=hero', '_blank')}
         onUndo={handleUndo}
@@ -104,39 +132,43 @@ export default function HeroManager() {
       >
         <AutoSaveIndicator status={saveStatus} lastSaved={lastSaved} />
       </StickyToolbar>
-
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
+      <div className="p-6 space-y-6">
         <SectionCard title="Content" defaultOpen={true}>
-          <FormField label="Badge (small text above heading)" value={hero.badge || ''} onChange={v => handleFieldChange('badge', v)} placeholder="Nepal's first micro-warehouse marketplace" />
-          <FormField label="Main Heading" value={hero.title || ''} onChange={v => handleFieldChange('title', v)} placeholder="Store smart." maxLength={60} helper="The primary title visitors see" />
-          <FormField label="Highlighted Word" value={hero.title_highlight || ''} onChange={v => handleFieldChange('title_highlight', v)} placeholder="Sell more." maxLength={30} helper="The colored, underlined word in the heading" />
-          <FormField label="Description" value={hero.description || ''} onChange={v => handleFieldChange('description', v)} type="textarea" placeholder="Stop stuffing your room with inventory..." maxLength={250} helper="Main descriptive text below the heading" />
+          <FormField label="Badge (small text above heading)" value={hero.badge} onChange={v => handleFieldChange('badge', v)} placeholder="Nepal's first micro-warehouse marketplace" />
+          <FormField label="Main Heading" value={hero.title} onChange={v => handleFieldChange('title', v)} placeholder="Store smart." maxLength={60} helper="The primary title visitors see" />
+          <FormField label="Highlighted Word" value={hero.title_highlight} onChange={v => handleFieldChange('title_highlight', v)} placeholder="Sell more." maxLength={30} helper="The colored, underlined word in the heading" />
+          <FormField label="Description" value={hero.description} onChange={v => handleFieldChange('description', v)} type="textarea" placeholder="Stop stuffing your room with inventory..." maxLength={250} helper="Main descriptive text below the heading" />
         </SectionCard>
         <SectionCard title="Background Image">
           <ImageUploader value={hero.hero_bg} onChange={handleImageChange} onRemove={handleImageRemove} />
         </SectionCard>
         <SectionCard title="Buttons">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <FormField label="Primary Button Text" value={hero.cta_primary_text || ''} onChange={v => handleFieldChange('cta_primary_text', v)} placeholder="Find storage near you" />
-            <FormField label="Primary Button Link" value={hero.cta_primary_link || ''} onChange={v => handleFieldChange('cta_primary_link', v)} placeholder="/listings" />
-            <FormField label="Secondary Button Text" value={hero.cta_secondary_text || ''} onChange={v => handleFieldChange('cta_secondary_text', v)} placeholder="List your space" />
-            <FormField label="Secondary Button Link" value={hero.cta_secondary_link || ''} onChange={v => handleFieldChange('cta_secondary_link', v)} placeholder="/register?role=host" />
+            <FormField label="Primary Button Text" value={hero.cta_primary_text} onChange={v => handleFieldChange('cta_primary_text', v)} placeholder="Find storage near you" />
+            <FormField label="Primary Button Link" value={hero.cta_primary_link} onChange={v => handleFieldChange('cta_primary_link', v)} placeholder="/listings" />
+            <FormField label="Secondary Button Text" value={hero.cta_secondary_text} onChange={v => handleFieldChange('cta_secondary_text', v)} placeholder="List your space" />
+            <FormField label="Secondary Button Link" value={hero.cta_secondary_link} onChange={v => handleFieldChange('cta_secondary_link', v)} placeholder="/register?role=host" />
           </div>
         </SectionCard>
-        <SectionCard title="Statistics">
+        <SectionCard title="Dashboard Mockup">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <FormField label="Dashboard Title" value={hero.dashboard_title} onChange={v => handleFieldChange('dashboard_title', v)} placeholder="Storage Overview" />
+            <FormField label="Dashboard Subtitle" value={hero.dashboard_subtitle} onChange={v => handleFieldChange('dashboard_subtitle', v)} placeholder="Live inventory dashboard" />
+          </div>
+        </SectionCard>
+        <SectionCard title="Floating Cards">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <FormField label="Card 1 Title" value={hero.floating_card_1_title} onChange={v => handleFieldChange('floating_card_1_title', v)} placeholder="Pickup confirmed" />
+            <FormField label="Card 1 Subtitle" value={hero.floating_card_1_subtitle} onChange={v => handleFieldChange('floating_card_1_subtitle', v)} placeholder="Today at 2:00 PM" />
+            <FormField label="Card 2 Title" value={hero.floating_card_2_title} onChange={v => handleFieldChange('floating_card_2_title', v)} placeholder="Booking approved" />
+            <FormField label="Card 2 Subtitle" value={hero.floating_card_2_subtitle} onChange={v => handleFieldChange('floating_card_2_subtitle', v)} placeholder="By Host" />
+          </div>
+        </SectionCard>
+        <SectionCard title="Statistics Labels (numbers are live)">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-            <div className="space-y-3">
-              <FormField label="Stat 1 Number" value={hero.stat1_number || ''} onChange={v => handleFieldChange('stat1_number', v)} placeholder="500+" />
-              <FormField label="Stat 1 Label" value={hero.stat1_label || ''} onChange={v => handleFieldChange('stat1_label', v)} placeholder="Active sellers" />
-            </div>
-            <div className="space-y-3">
-              <FormField label="Stat 2 Number" value={hero.stat2_number || ''} onChange={v => handleFieldChange('stat2_number', v)} placeholder="50+" />
-              <FormField label="Stat 2 Label" value={hero.stat2_label || ''} onChange={v => handleFieldChange('stat2_label', v)} placeholder="Verified hosts" />
-            </div>
-            <div className="space-y-3">
-              <FormField label="Stat 3 Number" value={hero.stat3_number || ''} onChange={v => handleFieldChange('stat3_number', v)} placeholder="10+" />
-              <FormField label="Stat 3 Label" value={hero.stat3_label || ''} onChange={v => handleFieldChange('stat3_label', v)} placeholder="Locations" />
-            </div>
+            <FormField label="Stat 1 Label" value={hero.stat1_label} onChange={v => handleFieldChange('stat1_label', v)} placeholder="Active sellers" />
+            <FormField label="Stat 2 Label" value={hero.stat2_label} onChange={v => handleFieldChange('stat2_label', v)} placeholder="Verified hosts" />
+            <FormField label="Stat 3 Label" value={hero.stat3_label} onChange={v => handleFieldChange('stat3_label', v)} placeholder="Locations" />
           </div>
         </SectionCard>
       </div>

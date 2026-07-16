@@ -39,12 +39,22 @@ export default function Navbar() {
   const getDashboardLink = () => `/${user.role}/dashboard`
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
 
-  const menuItems = cms?.navigation?.menu_items || [
-    { label: 'Find Storage', url: '/listings' },
-    { label: 'Services', url: '/services' },
-    { label: 'About', url: '/about' },
-    { label: 'Contact', url: '/contact' },
-  ]
+  const menuItems = (() => {
+    const items = cms?.navigation?.menu_items;
+    if (Array.isArray(items) && items.length > 0) return items;
+    if (typeof items === 'string') {
+      try {
+        const parsed = JSON.parse(items);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch {}
+    }
+    return [
+      { label: 'Find Storage', url: '/listings' },
+      { label: 'Services', url: '/services' },
+      { label: 'About', url: '/about' },
+      { label: 'Contact', url: '/contact' },
+    ];
+  })();
 
   const websiteName = cms?.navigation?.website_name || 'Saman'
   const websiteNameHighlight = cms?.navigation?.website_name_highlight || 'Bhandar'

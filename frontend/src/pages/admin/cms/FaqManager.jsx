@@ -11,7 +11,7 @@ const fields = [
   { key: 'display_order', label: 'Order', type: 'number' },
 ]
 
-const fallback = [
+const fallbackFaqs = [
   { question: 'How does SamanBhandar work?', answer: 'Sellers find nearby storage hosts, book a space, store their inventory, and schedule courier pickups with all from one dashboard.', display_order: 1 },
   { question: 'How do I become a storage host?', answer: 'Register as a host, list your unused room or garage, set your price, and start accepting bookings after our team verifies you.', display_order: 2 },
   { question: 'Is my inventory safe?', answer: 'All hosts are verified by our team before going live. You can also read reviews from other sellers before booking.', display_order: 3 },
@@ -24,11 +24,11 @@ export default function FaqManager() {
   const [loading, setLoading] = useState(true)
   const addToast = useToast()
 
-  const seedIfEmpty = async () => {
+  const fetch = async () => {
     try {
       const res = await getFaqs()
       if (res.data.data.length === 0) {
-        for (const item of fallback) {
+        for (const item of fallbackFaqs) {
           await createFaq(item).catch(() => {})
         }
         const newRes = await getFaqs()
@@ -40,20 +40,20 @@ export default function FaqManager() {
     finally { setLoading(false) }
   }
 
-  useEffect(() => { seedIfEmpty() }, [])
+  useEffect(() => { fetch() }, [])
 
   const handleAdd = async (data) => {
-    try { await createFaq(data); addToast('FAQ added', 'success'); seedIfEmpty() }
+    try { await createFaq(data); addToast('FAQ added', 'success'); fetch() }
     catch { addToast('Failed to add FAQ', 'error') }
   }
 
   const handleUpdate = async (id, data) => {
-    try { await updateFaq(id, data); addToast('FAQ updated', 'success'); setItems(prev => prev.map(i => i.id === id ? { ...i, ...data } : i)) }
+    try { await updateFaq(id, data); addToast('FAQ updated', 'success'); fetch() }
     catch { addToast('Failed to update FAQ', 'error') }
   }
 
   const handleDelete = async (id) => {
-    try { await deleteFaq(id); addToast('FAQ deleted', 'success'); setItems(prev => prev.filter(i => i.id !== id)) }
+    try { await deleteFaq(id); addToast('FAQ deleted', 'success'); fetch() }
     catch { addToast('Failed to delete FAQ', 'error') }
   }
 
@@ -65,12 +65,17 @@ export default function FaqManager() {
     } catch { addToast('Reorder failed', 'error') }
   }
 
+  const handleSave = async () => {
+    await fetch()
+    addToast('FAQs refreshed', 'success')
+  }
+
   const handleReset = async () => {
     if (!window.confirm('Delete ALL FAQs? This cannot be undone.')) return
     try {
       await Promise.all(items.map(i => deleteFaq(i.id)))
-      addToast('Reset complete', 'success')
-      seedIfEmpty()
+      addToast('All FAQs deleted', 'success')
+      fetch()
     } catch { addToast('Failed to reset', 'error') }
   }
 
@@ -81,6 +86,7 @@ export default function FaqManager() {
       <StickyToolbar
         title="FAQs"
         description="Frequently asked questions shown on the homepage."
+        onSave={handleSave}
         onPreview={() => window.open('/?preview=faq', '_blank')}
         onReset={items.length > 0 ? handleReset : undefined}
       />

@@ -171,7 +171,7 @@ function PaymentModal({ booking, onSuccess, onClose }) {
                 <p className="text-[11px] text-[#71717a]">Pay with Khalti digital wallet</p>
               </div>
             </div>
-            <ArrowRight size={16} className="text-[#71717a] group-hover:text-purple-600 group-hover:translate-x-0.5 transition-all" />
+            <ArrowRight size={16} className="text-[#71717a] group-hover:text-purple-600 group-hover:translate-x-0.5 transition-all"/>
           </button>
         </div>
       </div>
